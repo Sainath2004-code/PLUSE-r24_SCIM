@@ -1,0 +1,5 @@
+{
+  "name": "NewsFlex Admin",
+  "description": "A dynamic news platform with a drag-and-drop layout builder, approval workflows, and block-based content editing.",
+  "requestFramePermissions": []
+}
