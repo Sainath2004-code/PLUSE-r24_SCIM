@@ -42,6 +42,7 @@ export const AdminPdfUpload: React.FC = () => {
     const [pdfFile, setPdfFile] = useState<File | null>(null);
     const [extractProgress, setExtractProgress] = useState('');
     const [saving, setSaving] = useState(false);
+    const [publishedId, setPublishedId] = useState<string | null>(null);
 
     // Editable fields
     const [title, setTitle] = useState('');
@@ -153,7 +154,7 @@ export const AdminPdfUpload: React.FC = () => {
                 tags: tags.split(',').map(t => t.trim()).filter(Boolean),
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
-                publishedAt: status === 'published' ? new Date().toISOString() : null,
+                publishedAt: status === 'published' ? new Date().toISOString() : undefined,
                 status,
                 meta: {
                     source: 'pdf_upload',
@@ -164,13 +165,16 @@ export const AdminPdfUpload: React.FC = () => {
 
             await storageService.saveNewsItem(newsItem);
             setStage('done');
+            if (status === 'published') setPublishedId(newsItem.id);
             addToast(
-                status === 'pending_approval'
-                    ? 'Article submitted for approval!'
-                    : 'Article saved as draft!',
+                status === 'published'
+                    ? '🎉 Article published! Now live on the bulletin.'
+                    : status === 'pending_approval'
+                        ? 'Article submitted for approval!'
+                        : 'Article saved as draft!',
                 'success'
             );
-            setTimeout(() => navigate('/admin/list'), 1200);
+            if (status !== 'published') setTimeout(() => navigate('/admin/list'), 1200);
         } catch (err: any) {
             addToast(`Save failed: ${err?.message ?? 'Unknown error'}`, 'error');
         } finally {
@@ -450,25 +454,58 @@ export const AdminPdfUpload: React.FC = () => {
                     )}
 
                     {/* Actions */}
-                    <div className="flex gap-3 pt-2">
+                    <div className="flex flex-wrap gap-3 pt-2">
                         <Button variant="ghost" onClick={() => handleSave('draft')} disabled={saving || !title.trim()}>
                             {saving ? <><Loader2 size={14} className="animate-spin mr-1" /> Saving…</> : 'Save as Draft'}
                         </Button>
                         <Button onClick={() => handleSave('pending_approval')} disabled={saving || !title.trim()}>
                             {saving ? <><Loader2 size={14} className="animate-spin mr-1" /> Submitting…</> : 'Submit for Approval →'}
                         </Button>
+                        <button
+                            onClick={() => handleSave('published')}
+                            disabled={saving || !title.trim()}
+                            className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors disabled:opacity-50 shadow-sm"
+                        >
+                            {saving
+                                ? <><Loader2 size={14} className="animate-spin" /> Publishing…</>
+                                : <><CheckCircle size={15} /> Publish Now — Go Live</>}
+                        </button>
                     </div>
                 </div>
             )}
 
             {/* ── Stage: Done ── */}
             {stage === 'done' && (
-                <Card className="p-16 flex flex-col items-center gap-4">
+                <Card className="p-16 flex flex-col items-center gap-4 text-center">
                     <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center">
                         <CheckCircle size={40} className="text-emerald-500" />
                     </div>
-                    <p className="text-xl font-bold text-slate-800">Article Saved!</p>
-                    <p className="text-sm text-slate-400">Redirecting to news list…</p>
+                    <p className="text-xl font-bold text-slate-800">
+                        {publishedId ? '🎉 Article is Live!' : 'Article Saved!'}
+                    </p>
+                    {publishedId ? (
+                        <>
+                            <p className="text-sm text-slate-500">Your bulletin is now visible on the public intelligence feed.</p>
+                            <div className="flex gap-3 mt-2">
+                                <a
+                                    href={`/#/news/${publishedId}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="px-4 py-2 bg-intel-800 text-white text-sm font-semibold rounded-lg hover:bg-intel-700 transition-colors"
+                                >
+                                    View Live Article →
+                                </a>
+                                <button
+                                    onClick={() => navigate('/admin/list')}
+                                    className="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-200 transition-colors"
+                                >
+                                    Back to Articles
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        <p className="text-sm text-slate-400">Redirecting to news list…</p>
+                    )}
                 </Card>
             )}
         </div>
