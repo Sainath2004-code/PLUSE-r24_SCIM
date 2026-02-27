@@ -4,7 +4,7 @@ import {
     ChevronLeft, FileUp, FileText, X, Loader2, Image,
     Sparkles, CheckCircle, AlertTriangle, Tag, AlignLeft, Type, Upload, Trash2
 } from 'lucide-react';
-import { extractTextFromPdf, parsePdfToNewsFields } from '../../services/pdfService';
+import { extractTextFromPdf, parsePdfToNewsFieldsFromFile } from '../../services/pdfService';
 import { storageService } from '../../services/storageService';
 import { NewsItem, LayoutTemplate, NewsStatus } from '../../types';
 import { Button } from '../../components/ui/Button';
@@ -83,13 +83,16 @@ export const AdminPdfUpload: React.FC = () => {
         setStage('extracting');
 
         try {
-            setExtractProgress('Reading PDF pages…');
-            const rawText = await extractTextFromPdf(file);
+            setExtractProgress('Reading PDF layout and pages…');
+            // Small pause so spinner renders
+            await new Promise(r => setTimeout(r, 100));
 
-            setExtractProgress('Analysing content…');
-            await new Promise(r => setTimeout(r, 600)); // brief pause for UX
+            setExtractProgress('Detecting headings and structure…');
+            const fields = await parsePdfToNewsFieldsFromFile(file);
 
-            const fields = parsePdfToNewsFields(rawText);
+            setExtractProgress('Separating title, summary, and body…');
+            await new Promise(r => setTimeout(r, 300)); // brief UX pause
+
             setTitle(fields.title);
             setExcerpt(fields.excerpt);
             setBody(fields.body);
@@ -319,8 +322,8 @@ export const AdminPdfUpload: React.FC = () => {
                                 type="button"
                                 onClick={() => setImageMode('url')}
                                 className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${imageMode === 'url'
-                                        ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-200'
-                                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                                    ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-200'
+                                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                                     }`}
                             >
                                 Image URL
@@ -329,8 +332,8 @@ export const AdminPdfUpload: React.FC = () => {
                                 type="button"
                                 onClick={() => setImageMode('upload')}
                                 className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${imageMode === 'upload'
-                                        ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-200'
-                                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                                    ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-200'
+                                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                                     }`}
                             >
                                 Upload File
