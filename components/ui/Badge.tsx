@@ -1,12 +1,24 @@
 import React from 'react';
-import { NewsStatus } from '../../types';
 
-export const Badge: React.FC<{ status: NewsStatus }> = ({ status }) => {
-    const styles = {
-        draft: "bg-slate-100 text-slate-700",
-        pending_approval: "bg-amber-100 text-amber-800",
-        published: "bg-emerald-100 text-emerald-800",
-        rejected: "bg-red-100 text-red-800",
+interface BadgeProps {
+    children: React.ReactNode;
+    variant?: 'city' | 'category' | 'status' | 'tag';
+    className?: string;
+}
+
+export const Badge: React.FC<BadgeProps> = ({ children, variant = 'tag', className = '' }) => {
+    const base = 'inline-block text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 font-semibold';
+
+    const variants: Record<string, string> = {
+        city: 'text-maroon-600 font-bold text-xs',           // Just bold maroon text, no bg — matches PDF
+        category: 'bg-intel-800 text-intel-100 px-2',        // Navy bg, light text
+        status: 'bg-gray-100 text-gray-600',                  // Neutral status
+        tag: 'bg-gray-100 text-gray-600 text-[10px]',        // Subtle tag
     };
-    return <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${styles[status]}`}>{status.replace('_', ' ')}</span>;
+
+    return (
+        <span className={`${base} ${variants[variant]} ${className}`}>
+            {children}
+        </span>
+    );
 };

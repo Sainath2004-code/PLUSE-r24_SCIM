@@ -1,13 +1,29 @@
 import React from 'react';
 
-export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'danger' | 'ghost' }> =
-    ({ className = '', variant = 'primary', ...props }) => {
-        const base = "px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed";
-        const variants = {
-            primary: "bg-brand-600 text-white hover:bg-brand-700 shadow-sm",
-            secondary: "bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 shadow-sm",
-            danger: "bg-red-600 text-white hover:bg-red-700 shadow-sm",
-            ghost: "text-slate-600 hover:bg-slate-100"
-        };
-        return <button className={`${base} ${variants[variant]} ${className}`} {...props} />;
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+    variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+    children: React.ReactNode;
+    className?: string;
+}
+
+export const Button: React.FC<ButtonProps> = ({
+    variant = 'primary',
+    children,
+    className = '',
+    ...props
+}) => {
+    const base = 'inline-flex items-center justify-center px-4 py-2 text-sm font-semibold uppercase tracking-wider transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed font-inter';
+
+    const variants: Record<string, string> = {
+        primary: 'bg-maroon-600 text-white hover:bg-maroon-700 active:bg-maroon-800',
+        secondary: 'bg-transparent border border-intel-600 text-intel-800 hover:bg-intel-800 hover:text-white',
+        ghost: 'bg-transparent text-gray-600 hover:text-maroon-600 hover:underline',
+        danger: 'bg-red-600 text-white hover:bg-red-700',
     };
+
+    return (
+        <button className={`${base} ${variants[variant]} ${className}`} {...props}>
+            {children}
+        </button>
+    );
+};
