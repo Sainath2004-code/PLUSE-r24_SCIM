@@ -43,7 +43,9 @@ export const PublicDetail: React.FC = () => {
     }, [id]);
 
     const getCity = (item: NewsItem) => item.tags?.find(t => CITIES.includes(t)) || '';
-    const getTitle = (item: NewsItem) => item.blocks.find(b => b.type === 'title')?.value || 'Untitled';
+    const getTitle = (item: NewsItem) => item.blocks.find(b => b.type === 'title')?.value?.toString() || 'Untitled';
+    const getExcerpt = (item: NewsItem) => item.blocks.find(b => b.type === 'excerpt')?.value?.toString() || '';
+    const getCoverImage = (item: NewsItem) => item.blocks.find(b => b.type === 'image')?.value;
     const getDate = (item: NewsItem) => item.publishedAt
         ? new Date(item.publishedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
         : '';
@@ -79,6 +81,18 @@ export const PublicDetail: React.FC = () => {
         </div>
     );
 
+    const coverImage = getCoverImage(item);
+    const excerpt = getExcerpt(item);
+
+    // Skip title/excerpt/category/first-image in the body loop — they're shown in the header/hero
+    const coverImageBlockId = item.blocks.find(b => b.type === 'image')?.blockId;
+    const bodyBlocks = item.blocks.filter(b =>
+        b.type !== 'title' &&
+        b.type !== 'excerpt' &&
+        b.type !== 'category' &&
+        !(b.type === 'image' && b.blockId === coverImageBlockId)
+    );
+
     return (
         <div className="min-h-screen bg-white font-inter">
             <Navbar />
@@ -86,13 +100,11 @@ export const PublicDetail: React.FC = () => {
             {/* ─── ARTICLE HERO HEADER ─── */}
             <div className="pt-32 pb-12 bg-gray-50 border-b border-gray-200">
                 <div className="max-w-4xl mx-auto px-6">
-                    {/* Back Link */}
                     <Link to="/" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-maroon-600 transition-colors mb-8 group">
                         <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
                         Return to Intelligence Feed
                     </Link>
 
-                    {/* Issue Number */}
                     <div className="flex items-center gap-3 mb-6">
                         <div className="h-px w-8 bg-maroon-500"></div>
                         <div className="w-2 h-2 rounded-full bg-maroon-500"></div>
@@ -101,17 +113,21 @@ export const PublicDetail: React.FC = () => {
                         <span className="text-xs font-mono text-gray-400">{issueNumber}</span>
                     </div>
 
-                    {/* Title */}
-                    <h1 className="font-playfair text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-8">
+                    <h1 className="font-playfair text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-6">
                         {getTitle(item)}
                     </h1>
 
-                    {/* Meta row */}
-                    <div className="flex flex-wrap items-center gap-4 text-sm">
+                    {excerpt && (
+                        <p className="text-xl text-gray-600 leading-relaxed mb-8 max-w-3xl font-light border-l-4 border-maroon-400 pl-5">
+                            {excerpt}
+                        </p>
+                    )}
+
+                    <div className="flex flex-wrap items-center gap-4 text-sm border-t border-gray-200 pt-6">
                         {getCity(item) && (
                             <span className="text-maroon-600 font-bold uppercase tracking-wider text-xs">{getCity(item)}</span>
                         )}
-                        {item.tags?.filter(t => !CITIES.includes(t)).map(tag => (
+                        {item.tags?.filter(t => !CITIES.includes(t)).slice(0, 5).map(tag => (
                             <span key={tag} className="text-[11px] font-mono uppercase tracking-wider text-gray-500 bg-gray-200 px-2 py-0.5">{tag}</span>
                         ))}
                         {item.author && (
@@ -122,26 +138,54 @@ export const PublicDetail: React.FC = () => {
                 </div>
             </div>
 
-            {/* ─── ARTICLE CONTENT ─── */}
-            <main className="max-w-4xl mx-auto px-6 py-14">
-                <div className="grid grid-cols-12 gap-6">
-                    {item.blocks.map((blockValue, index) => {
+            {/* ─── COVER IMAGE ─── */}
+            {coverImage?.src && (
+                <div className="max-w-4xl mx-auto px-6 pt-10">
+                    <figure>
+                        <img
+                            src={coverImage.src}
+                            alt={coverImage.caption || getTitle(item)}
+                            className="w-full max-h-[480px] object-cover rounded-xl shadow-lg"
+                        />
+                        {coverImage.caption && (
+                            <figcaption className="mt-3 text-center text-sm text-gray-500 italic">{coverImage.caption}</figcaption>
+                        )}
+                    </figure>
+                </div>
+            )}
+
+            {/* ─── ARTICLE BODY ─── */}
+            <main className="max-w-4xl mx-auto px-6 py-12">
+                {bodyBlocks.length > 0 ? (
+                    bodyBlocks.map((blockValue, index) => {
                         const definition = template?.blocks.find(b => b.id === blockValue.blockId) || {
                             id: blockValue.blockId,
                             type: blockValue.type as any,
                             grid: { colSpan: 12, colStart: 1 }
                         };
-
                         return (
-                            <div
-                                key={index}
-                                className={`col-span-12 md:col-span-${definition.grid?.colSpan || 12}`}
-                            >
+                            <div key={index}>
                                 <BlockRenderer block={definition} value={blockValue.value} />
                             </div>
                         );
-                    })}
-                </div>
+                    })
+                ) : (
+                    <p className="text-gray-400 italic text-center py-10">No body content available for this article.</p>
+                )}
+
+                {/* Link to original PDF if available */}
+                {item.meta?.pdfUrl && (
+                    <div className="mt-12 pt-8 border-t border-gray-200">
+                        <a
+                            href={item.meta.pdfUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-2 text-sm text-intel-700 hover:text-intel-900 font-medium underline underline-offset-4"
+                        >
+                            📄 View Original PDF Bulletin
+                        </a>
+                    </div>
+                )}
             </main>
 
             <Footer />
