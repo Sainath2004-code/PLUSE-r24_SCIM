@@ -19,10 +19,10 @@ export const storageService = {
       if (error) {
         // If table doesn't exist, code is usually 42P01 (Postgres) or PGRST205 (PostgREST)
         if (error.code === 'PGRST205' || error.code === '42P01') {
-           return { connected: false, error };
+          return { connected: false, error };
         }
         // Other errors (like network) might technically mean connected but failing
-        return { connected: true, error }; 
+        return { connected: true, error };
       }
       return { connected: true };
     } catch (e) {
@@ -35,7 +35,7 @@ export const storageService = {
       .from('news_items')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) {
       // Suppress table missing errors in console to avoid noise before setup
       if (error.code !== 'PGRST205' && error.code !== '42P01') {
@@ -43,7 +43,7 @@ export const storageService = {
       }
       return [];
     }
-    
+
     return data.map((item: any) => ({
       id: item.id,
       templateId: item.template_id,
@@ -81,7 +81,7 @@ export const storageService = {
   },
 
   saveNewsItem: async (item: NewsItem): Promise<void> => {
-     const dbItem = {
+    const dbItem = {
       id: item.id,
       template_id: item.templateId,
       blocks: item.blocks,
@@ -101,7 +101,7 @@ export const storageService = {
 
   deleteNewsItem: async (id: string): Promise<void> => {
     const { error } = await supabase.from('news_items').delete().eq('id', id);
-    if (error) console.error('Error deleting news:', error);
+    if (error) throw error;
   },
 
   getLayouts: async (): Promise<LayoutTemplate[]> => {
@@ -138,7 +138,7 @@ export const storageService = {
       .from('news_admins')
       .select('*')
       .eq('email', email)
-      .eq('password_hash', pass) 
+      .eq('password_hash', pass)
       .single();
 
     if (error) {
@@ -147,7 +147,7 @@ export const storageService = {
       if (error.code === 'PGRST116') {
         return { success: false, token: null, error: { message: 'Invalid credentials' } };
       }
-      
+
       console.error('Login error:', error);
       return { success: false, token: null, error };
     }
@@ -179,9 +179,9 @@ export const storageService = {
         password_hash: MOCK_ADMIN.passwordHash,
         name: MOCK_ADMIN.name
       };
-      
+
       const { error: adminError } = await supabase.from('news_admins').upsert(dbAdmin, { onConflict: 'id' });
-      
+
       if (adminError) {
         // Critical error (missing table)
         if (adminError.code === '42P01' || adminError.message?.includes('not found') || adminError.code === 'PGRST205') {
@@ -195,10 +195,10 @@ export const storageService = {
       // 2. Check & Seed Layouts (Must be before News due to FK)
       const { count: layoutCount } = await supabase.from('news_layout_templates').select('*', { count: 'exact', head: true });
       if (layoutCount === 0 || layoutCount === null) {
-         for (const t of MOCK_LAYOUTS) {
-           await storageService.saveLayout(t);
-         }
-         console.log('Seeded Layouts');
+        for (const t of MOCK_LAYOUTS) {
+          await storageService.saveLayout(t);
+        }
+        console.log('Seeded Layouts');
       }
 
       // 3. Check & Seed News
@@ -214,7 +214,7 @@ export const storageService = {
       return { success: false, error: e };
     }
   },
-  
+
   uploadImage: async (file: File): Promise<string | null> => {
     const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`;
     const { data, error } = await supabase.storage
@@ -229,9 +229,28 @@ export const storageService = {
     const { data: publicUrlData } = supabase.storage
       .from('news-images')
       .getPublicUrl(fileName);
-      
+
     return publicUrlData.publicUrl;
   },
-  
+
+  uploadPdf: async (file: File): Promise<string | null> => {
+    const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const { data, error } = await supabase.storage
+      .from('news-pdfs')
+      .upload(fileName, file, { contentType: 'application/pdf' });
+
+    if (error) {
+      // Non-critical — storage bucket may not exist yet; continue without URL
+      console.warn('PDF upload skipped (bucket may not exist):', error.message);
+      return null;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from('news-pdfs')
+      .getPublicUrl(fileName);
+
+    return publicUrlData.publicUrl;
+  },
+
   getErrorMessage // Export helper
 };

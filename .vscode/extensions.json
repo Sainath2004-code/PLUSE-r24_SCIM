@@ -1,5 +1,12 @@
 {
-    "recommendations": [
-        "openai.chatgpt"
-    ]
+  "recommendations": [
+    "openai.chatgpt",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "mtxr.sqltools"
+  ],
+  "unwantedRecommendations": [
+    "HookyQR.beautify"
+  ]
 }

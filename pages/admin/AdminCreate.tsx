@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, Upload, Trash2 } from 'lucide-react';
+import { ChevronLeft, Upload, Trash2, Clock, BookOpen, Calendar, Save } from 'lucide-react';
 import { storageService } from '../../services/storageService';
 import { NewsItem, LayoutTemplate, NewsStatus, NewsBlockValue } from '../../types';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { useToast } from '../../context/ToastContext';
 import { MarkdownEditor } from '../../components/MarkdownEditor';
+import { useAutoSave } from '../../hooks/useAutoSave';
+import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
+import { countWords, estimateReadingTime } from '../../utils/readingTime';
 
 export const AdminCreate: React.FC = () => {
     const { id } = useParams();
@@ -17,6 +20,13 @@ export const AdminCreate: React.FC = () => {
     const [formData, setFormData] = useState<Record<string, any>>({});
     const [templates, setTemplates] = useState<LayoutTemplate[]>([]);
     const [itemStatus, setItemStatus] = useState<NewsStatus>('draft');
+    const [isDirty, setIsDirty] = useState(false);
+    const [scheduledAt, setScheduledAt] = useState('');
+    const [seoTitle, setSeoTitle] = useState('');
+    const [seoDesc, setSeoDesc] = useState('');
+    const [wordCount, setWordCount] = useState(0);
+    const [readingTime, setReadingTime] = useState(1);
+    const [lastSavedLabel, setLastSavedLabel] = useState<string | null>(null);
 
     useEffect(() => {
         const init = async () => {
@@ -33,6 +43,9 @@ export const AdminCreate: React.FC = () => {
                     const data: Record<string, any> = {};
                     item.blocks.forEach(b => { data[b.blockId] = b.value; });
                     setFormData(data);
+                    if ((item as any).scheduledAt) setScheduledAt((item as any).scheduledAt.slice(0, 16));
+                    if ((item as any).seoTitle) setSeoTitle((item as any).seoTitle);
+                    if ((item as any).seoDescription) setSeoDesc((item as any).seoDescription);
                 }
             } else if (allTemplates.length > 0) {
                 setTemplate(allTemplates[0]);
@@ -41,7 +54,18 @@ export const AdminCreate: React.FC = () => {
         init();
     }, [id]);
 
-    const handleSave = async (status: NewsStatus) => {
+    // Live word count from markdown blocks
+    useEffect(() => {
+        const markdownBlock = template?.blocks.find(b => b.type === 'markdown');
+        const text = markdownBlock ? (formData[markdownBlock.id] ?? '') : '';
+        setWordCount(countWords(text));
+        setReadingTime(estimateReadingTime(text));
+    }, [formData, template]);
+
+    // Warn on unsaved changes
+    useUnsavedChanges(isDirty);
+
+    const handleSave = useCallback(async (status: NewsStatus) => {
         setLoading(true);
         if (!template) return;
 
@@ -63,53 +87,96 @@ export const AdminCreate: React.FC = () => {
             blocks,
             createdAt: existingItem ? existingItem.createdAt : new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            status: status,
-            publishedAt: status === 'published' ? new Date().toISOString() : undefined,
-            author: 'Admin'
-        };
+            status,
+            publishedAt: status === 'published' ? new Date().toISOString() : (existingItem?.publishedAt ?? undefined),
+            author: 'Admin',
+            // Extra CMS fields stored at top level for future schema
+            ...(scheduledAt ? { scheduledAt: new Date(scheduledAt).toISOString() } : {}),
+            ...(seoTitle ? { seoTitle } : {}),
+            ...(seoDesc ? { seoDescription: seoDesc } : {}),
+        } as any;
 
         await storageService.saveNewsItem(newItem);
         setLoading(false);
-        addToast(id ? 'Article updated successfully' : 'Article created successfully', 'success');
-        navigate('/admin/list');
-    };
+        setIsDirty(false);
+        setLastSavedLabel(`Saved at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+        addToast(id ? 'Article updated' : 'Article created', 'success');
+        if (status !== 'draft') navigate('/admin/list');
+    }, [template, formData, id, scheduledAt, seoTitle, seoDesc, addToast, navigate]);
+
+    // Auto-save draft every 30s
+    useAutoSave(useCallback(async () => {
+        if (!isDirty || !template) return;
+        await handleSave('draft');
+    }, [isDirty, template, handleSave]));
 
     const updateField = (blockId: string, value: any) => {
         setFormData(prev => ({ ...prev, [blockId]: value }));
+        setIsDirty(true);
     };
 
     if (!template && !loading) return <div>No templates found. Create one first.</div>;
 
     return (
-        <div className="max-w-5xl mx-auto pb-20">
-            <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-4">
-                    <Link to="/admin/list" className="p-2 hover:bg-slate-100 rounded-full text-slate-500"><ChevronLeft /></Link>
-                    <h1 className="text-2xl font-bold text-slate-900">{id ? 'Edit News' : 'Create News'}</h1>
-                    {!id && (
+        <div className="max-w-6xl mx-auto pb-20">
+            {/* Header */}
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+                <div className="flex items-center gap-3">
+                    <Link to="/admin/list" className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors">
+                        <ChevronLeft size={20} />
+                    </Link>
+                    <div>
+                        <h1 className="text-xl font-bold text-slate-900 dark:text-white">{id ? 'Edit Article' : 'Create Article'}</h1>
+                        {lastSavedLabel ? (
+                            <p className="text-xs text-emerald-500 flex items-center gap-1 mt-0.5">
+                                <Save size={10} /> {lastSavedLabel}
+                            </p>
+                        ) : isDirty ? (
+                            <p className="text-xs text-amber-500 mt-0.5">Unsaved changes</p>
+                        ) : null}
+                    </div>
+                    {!id && templates.length > 1 && (
                         <select
-                            className="ml-4 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-brand-500 outline-none"
+                            className="ml-2 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none"
                             value={template?.templateId}
                             onChange={e => {
                                 const t = templates.find(tpl => tpl.templateId === e.target.value);
-                                if (t) {
-                                    setTemplate(t);
-                                    setFormData({});
-                                }
+                                if (t) { setTemplate(t); setFormData({}); }
                             }}
                         >
                             {templates.map(t => <option key={t.templateId} value={t.templateId}>{t.name}</option>)}
                         </select>
                     )}
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="ghost" onClick={() => handleSave('draft')} disabled={loading}>
-                        {loading ? 'Saving...' : 'Save Draft'}
-                    </Button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => handleSave('draft')}
+                        disabled={loading}
+                        className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+                    >
+                        <Save size={14} /> {loading ? 'Saving...' : 'Save Draft'}
+                    </button>
                     <Button onClick={() => handleSave('pending_approval')} disabled={loading}>
                         {loading ? 'Submitting...' : 'Submit for Approval'}
                     </Button>
+                    <Button
+                        onClick={() => handleSave('published')}
+                        disabled={loading}
+                        className="!bg-emerald-600 hover:!bg-emerald-700"
+                    >
+                        Publish
+                    </Button>
                 </div>
+            </div>
+
+            {/* Stats bar */}
+            <div className="flex items-center gap-6 mb-6 px-1">
+                <span className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    <Clock size={13} /> {wordCount.toLocaleString()} words
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    <BookOpen size={13} /> {readingTime} min read
+                </span>
             </div>
 
             <div className="grid grid-cols-12 gap-6">
@@ -232,6 +299,84 @@ export const AdminCreate: React.FC = () => {
                         </Card>
                     </div>
                 ))}
+
+                {/* ── SIDEBAR PANEL ── */}
+                <div className="col-span-12 lg:col-span-3 space-y-4">
+
+                    {/* Publish status */}
+                    <Card className="p-4">
+                        <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3">Publish Status</p>
+                        <select
+                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-400 outline-none"
+                            value={itemStatus}
+                            onChange={e => { setItemStatus(e.target.value as NewsStatus); setIsDirty(true); }}
+                        >
+                            <option value="draft">Draft</option>
+                            <option value="pending_approval">Pending Approval</option>
+                            <option value="published">Published</option>
+                        </select>
+                    </Card>
+
+                    {/* Schedule */}
+                    <Card className="p-4">
+                        <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-1.5">
+                            <Calendar size={12} /> Schedule
+                        </label>
+                        <input
+                            type="datetime-local"
+                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-400 outline-none mt-2"
+                            value={scheduledAt}
+                            onChange={e => { setScheduledAt(e.target.value); setIsDirty(true); }}
+                        />
+                        {scheduledAt && (
+                            <p className="text-xs text-slate-400 mt-1.5">Publishes on {new Date(scheduledAt).toLocaleString()}</p>
+                        )}
+                    </Card>
+
+                    {/* SEO */}
+                    <Card className="p-4 space-y-3">
+                        <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">SEO</p>
+                        <div>
+                            <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-1">
+                                SEO Title <span className={`ml-1 font-normal ${seoTitle.length > 60 ? 'text-red-500' : 'text-slate-400'}`}>({seoTitle.length}/60)</span>
+                            </label>
+                            <input
+                                type="text"
+                                maxLength={70}
+                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-400 outline-none"
+                                value={seoTitle}
+                                onChange={e => { setSeoTitle(e.target.value); setIsDirty(true); }}
+                                placeholder="Override page title"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-1">
+                                Meta Description <span className={`ml-1 font-normal ${seoDesc.length > 160 ? 'text-red-500' : 'text-slate-400'}`}>({seoDesc.length}/160)</span>
+                            </label>
+                            <textarea
+                                rows={3}
+                                maxLength={180}
+                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-400 outline-none resize-none"
+                                value={seoDesc}
+                                onChange={e => { setSeoDesc(e.target.value); setIsDirty(true); }}
+                                placeholder="Search engine description"
+                            />
+                        </div>
+                    </Card>
+
+                    {/* Stats */}
+                    <Card className="p-4 space-y-2">
+                        <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Article Stats</p>
+                        <div className="flex items-center justify-between text-sm">
+                            <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1.5"><Clock size={13} /> Words</span>
+                            <span className="font-bold text-slate-800 dark:text-white">{wordCount.toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                            <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1.5"><BookOpen size={13} /> Read time</span>
+                            <span className="font-bold text-slate-800 dark:text-white">{readingTime} min</span>
+                        </div>
+                    </Card>
+                </div>
             </div>
         </div>
     );
