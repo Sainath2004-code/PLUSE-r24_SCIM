@@ -240,7 +240,7 @@ export const AdminCreate: React.FC = () => {
                                             <input
                                                 type="text"
                                                 placeholder="Image URL (e.g. https://picsum.photos/800/400)"
-                                                className="flex-1 px-3 py-2 bg-white text-slate-900 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
+                                                className="flex-1 px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
                                                 value={formData[block.id]?.src || ''}
                                                 onChange={(e) => updateField(block.id, { ...formData[block.id], src: e.target.value })}
                                             />
@@ -250,7 +250,7 @@ export const AdminCreate: React.FC = () => {
 
                                     <input
                                         type="text" placeholder="Caption"
-                                        className="w-full px-3 py-2 bg-white text-slate-900 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none"
+                                        className="w-full px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none"
                                         value={formData[block.id]?.caption || ''}
                                         onChange={(e) => updateField(block.id, { ...formData[block.id], caption: e.target.value })}
                                     />
@@ -272,14 +272,14 @@ export const AdminCreate: React.FC = () => {
                                 <input
                                     type="text"
                                     placeholder="tech, news, release (comma separated)"
-                                    className="w-full px-3 py-2 bg-white text-slate-900 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
+                                    className="w-full px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
                                     value={Array.isArray(formData[block.id]) ? formData[block.id].join(', ') : (formData[block.id] || '')}
                                     onChange={(e) => updateField(block.id, e.target.value.split(',').map((s: string) => s.trim()))}
                                 />
                             ) : block.type === 'publishDate' ? (
                                 <input
                                     type="datetime-local"
-                                    className="w-full px-3 py-2 bg-white text-slate-900 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
+                                    className="w-full px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
                                     value={formData[block.id] ? new Date(formData[block.id]).toISOString().slice(0, 16) : ''}
                                     onChange={(e) => updateField(block.id, new Date(e.target.value).toISOString())}
                                 />
@@ -291,7 +291,7 @@ export const AdminCreate: React.FC = () => {
                             ) : (
                                 <input
                                     type="text"
-                                    className="w-full px-3 py-2 bg-white text-slate-900 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
+                                    className="w-full px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
                                     value={formData[block.id] || ''}
                                     onChange={(e) => updateField(block.id, e.target.value)}
                                 />
