@@ -156,8 +156,11 @@ function groupIntoLines(items: RawItem[], colLabel: 'left' | 'right' | 'full'): 
     return groups.map(g => {
         g.items.sort((a, b) => a.x - b.x);
 
-        // Build text — add spaces between items when gap is large
+        // Build text — add a space between items only when the gap is large enough
+        // Use fontSize-relative threshold: gaps > fontSize*0.25 = word space, smaller = same word
         let text = '';
+        const avgFontSize = g.items.reduce((s, i) => s + i.fontSize, 0) / g.items.length;
+        const spaceThreshold = Math.max(3, avgFontSize * 0.25);
         for (let i = 0; i < g.items.length; i++) {
             const it = g.items[i];
             if (i === 0) {
@@ -165,7 +168,10 @@ function groupIntoLines(items: RawItem[], colLabel: 'left' | 'right' | 'full'): 
             } else {
                 const prev = g.items[i - 1];
                 const gap = it.x - (prev.x + prev.width);
-                text += (gap > 8 ? ' ' : '') + it.text;
+                // Negative gap = overlapping (ligatures) → no space
+                // Small gap = same word → no space
+                // Large gap = word boundary → space
+                text += (gap > spaceThreshold ? ' ' : '') + it.text;
             }
         }
         text = text.replace(/\s+/g, ' ').trim();
