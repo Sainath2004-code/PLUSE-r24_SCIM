@@ -261,23 +261,30 @@ function buildNewsFields(allLines: DocLine[]): Omit<ParsedPdfFields, 'coverImage
     const medianSize = sizes[Math.floor(sizes.length * 0.5)] || 10;
     const maxSize = Math.max(...sizes);
 
-    // ── Title: collect the biggest-font lines at the very top (first 25% of lines)
-    const topCutoff = Math.max(5, Math.ceil(lines.length * 0.25));
+    // ── Title: ONLY lines whose fontSize is within 20% of the page maximum
+    //    This strictly separates the main banner headline from section headers.
+    //    Also cap to first 30% of all lines so we don't travel down into body.
+    const titleFontMin = maxSize * 0.80;   // within 20% of biggest font = title zone
+    const topCutoff = Math.max(4, Math.ceil(lines.length * 0.30));
     const topLines = lines.slice(0, topCutoff);
-    const titleThreshold = Math.max(maxSize * 0.65, medianSize * 1.4);
 
     const titleParts: string[] = [];
     let lastTitleIdx = -1;
+    let titleFontSeen = -1;
 
     for (let i = 0; i < topLines.length; i++) {
         const l = topLines[i];
-        // Skip metadata-like short lines: date, issue vol, TLP, etc.
         if (isMetadataLine(l.text)) continue;
-        if (l.fontSize >= titleThreshold || (l.isHeading && l.fontSize >= medianSize * 1.15)) {
+
+        if (l.fontSize >= titleFontMin) {
+            // Accept first title-zone line; track its font size
+            if (titleFontSeen < 0) titleFontSeen = l.fontSize;
+            // If next line drops significantly in font (≥30% smaller), stop
+            if (titleFontSeen > 0 && l.fontSize < titleFontSeen * 0.70) break;
             titleParts.push(l.text);
             lastTitleIdx = i;
         } else if (titleParts.length > 0) {
-            // Once we've started collecting the title and hit a smaller line, stop
+            // We've collected at least one title line and this one is smaller → done
             break;
         }
     }
