@@ -18,24 +18,24 @@ export const Navbar: React.FC = () => {
                 <div className="flex flex-wrap md:grid md:grid-cols-3 items-center justify-between gap-y-3">
 
                     {/* LEFT — RRU Logo */}
-                    <div className="flex items-center gap-2 md:gap-3 order-1 md:order-none">
+                    <a href="https://rru.ac.in/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-3 order-1 md:order-none hover:opacity-80 transition-opacity cursor-pointer">
                         <img
                             src="/logos/rru-logo.png"
                             alt="Rashtriya Raksha University"
                             className="h-10 w-10 md:h-14 md:w-14 object-contain drop-shadow-sm"
                         />
-                        <div className="hidden lg:block">
-                            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-700 leading-tight">
+                        <div className="hidden lg:block text-left relative z-10 hover:text-maroon-600 transition-colors">
+                            <p className="text-[11px] font-bold uppercase tracking-widest leading-tight currentColor">
                                 Rashtriya Raksha
                             </p>
-                            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-700 leading-tight">
+                            <p className="text-[11px] font-bold uppercase tracking-widest leading-tight currentColor">
                                 University
                             </p>
                             <p className="text-[9px] text-gray-400 uppercase tracking-wider mt-0.5">
                                 Puducherry Campus
                             </p>
                         </div>
-                    </div>
+                    </a>
 
                     {/* CENTER — PULSE-R24 brand */}
                     <div className="flex justify-center flex-1 min-w-[50%] md:min-w-0 order-3 md:order-none w-full md:w-auto mt-2 md:mt-0">
