@@ -72,23 +72,23 @@ export const AdminLayout: React.FC = () => {
     const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
 
     return (
-        <div className="flex h-screen bg-slate-100 dark:bg-slate-950 font-inter overflow-hidden">
+        <div className="flex h-screen bg-slate-50 dark:bg-slate-950 font-inter overflow-hidden">
 
             {/* ── SIDEBAR ── */}
-            <aside className={`${sidebarOpen ? 'w-60' : 'w-16'} transition-all duration-200 bg-slate-900 dark:bg-slate-950 border-r border-slate-800 flex flex-col shrink-0`}>
+            <aside className={`${sidebarOpen ? 'w-60' : 'w-16'} transition-all duration-200 bg-intel-900 dark:bg-intel-950 border-r border-intel-800 flex flex-col shrink-0`}>
 
                 {/* Logo */}
-                <div className="h-14 flex items-center px-4 border-b border-slate-800 shrink-0">
+                <div className="h-14 flex items-center px-4 border-b border-intel-800 shrink-0">
                     {sidebarOpen ? (
                         <Link to="/admin/dashboard" className="flex items-center gap-2.5 min-w-0">
-                            <div className="w-7 h-7 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold text-xs shrink-0">P</div>
+                            <div className="w-7 h-7 rounded-lg bg-maroon-600 flex items-center justify-center text-white font-bold text-xs shrink-0">P</div>
                             <div className="overflow-hidden">
-                                <p className="text-white font-bold text-sm leading-none truncate">PULSE-R24</p>
-                                <p className="text-slate-500 text-[10px] uppercase tracking-wider mt-0.5">CMS</p>
+                                <p className="text-white font-bold text-sm leading-none truncate font-clarendon">PULSE-R24</p>
+                                <p className="text-intel-300 text-[10px] uppercase tracking-wider mt-0.5">Admin CMS</p>
                             </div>
                         </Link>
                     ) : (
-                        <div className="w-7 h-7 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold text-xs mx-auto">P</div>
+                        <div className="w-7 h-7 rounded-lg bg-maroon-600 flex items-center justify-center text-white font-bold text-xs mx-auto">P</div>
                     )}
                 </div>
 
@@ -97,7 +97,7 @@ export const AdminLayout: React.FC = () => {
                     {NAV_SECTIONS.map(section => (
                         <div key={section.label}>
                             {sidebarOpen && (
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-2 mb-2">{section.label}</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-intel-400 px-2 mb-2">{section.label}</p>
                             )}
                             <div className="space-y-0.5">
                                 {section.items.map(item => {
@@ -108,8 +108,8 @@ export const AdminLayout: React.FC = () => {
                                             to={item.path}
                                             title={!sidebarOpen ? item.label : undefined}
                                             className={`flex items-center gap-3 px-2.5 py-2 rounded-lg transition-colors group ${active
-                                                    ? 'bg-brand-600 text-white'
-                                                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                                    ? 'bg-maroon-600 text-white'
+                                                    : 'text-intel-200 hover:bg-intel-800 hover:text-white'
                                                 }`}
                                         >
                                             <item.icon size={17} className="shrink-0" />
@@ -123,10 +123,10 @@ export const AdminLayout: React.FC = () => {
                 </nav>
 
                 {/* User footer */}
-                <div className="p-3 border-t border-slate-800 shrink-0">
+                <div className="p-3 border-t border-intel-800 shrink-0">
                     {sidebarOpen ? (
                         <div className="flex items-center gap-3 px-2 py-2">
-                            <div className="w-8 h-8 rounded-full bg-brand-700 flex items-center justify-center text-brand-300 font-bold text-sm shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-maroon-700 flex items-center justify-center text-maroon-200 font-bold text-sm shrink-0">
                                 {admin.name.charAt(0).toUpperCase()}
                             </div>
                             <div className="flex-1 overflow-hidden">
@@ -157,7 +157,7 @@ export const AdminLayout: React.FC = () => {
             <div className="flex-1 flex flex-col overflow-hidden">
 
                 {/* ── TOPBAR ── */}
-                <header className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center px-4 gap-4 shrink-0 z-10">
+                <header className="h-14 bg-white dark:bg-intel-900 border-b border-slate-200 dark:border-intel-800 flex items-center px-4 gap-4 shrink-0 z-10">
                     {/* Sidebar toggle */}
                     <button
                         onClick={() => setSidebarOpen(s => !s)}
@@ -195,7 +195,7 @@ export const AdminLayout: React.FC = () => {
                                 onClick={() => setProfileOpen(o => !o)}
                                 className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                             >
-                                <div className="w-7 h-7 rounded-full bg-brand-600 flex items-center justify-center text-white text-xs font-bold">
+                                <div className="w-7 h-7 rounded-full bg-maroon-600 flex items-center justify-center text-white text-xs font-bold">
                                     {admin.name.charAt(0)}
                                 </div>
                                 <span className="text-sm font-medium text-slate-700 dark:text-slate-200 hidden sm:block">{admin.name}</span>

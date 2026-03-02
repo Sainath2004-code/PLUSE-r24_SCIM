@@ -73,56 +73,56 @@ export const Login: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-intel-900 flex items-center justify-center p-4">
             <div className="w-full max-w-md">
-                <Link to="/" className="inline-flex items-center gap-2 text-slate-500 hover:text-brand-600 transition-colors mb-6 font-medium">
+                <Link to="/" className="inline-flex items-center gap-2 text-intel-300 hover:text-white transition-colors mb-6 font-medium">
                     <ArrowLeft size={18} /> Back to News Portal
                 </Link>
-                <Card className="w-full p-8 shadow-lg">
+                <Card className="w-full p-8 shadow-2xl border-intel-800 bg-intel-800/50 backdrop-blur text-white">
                     <div className="text-center mb-8">
-                        <div className="w-12 h-12 bg-brand-600 rounded-xl mx-auto flex items-center justify-center text-white font-bold text-2xl mb-4 shadow-lg shadow-brand-500/30">N</div>
-                        <h1 className="text-2xl font-bold text-slate-900">Admin Login</h1>
-                        <p className="text-slate-500 mt-2">Enter your credentials to access the dashboard.</p>
+                        <div className="w-14 h-14 bg-maroon-600 rounded-xl mx-auto flex items-center justify-center text-white font-bold text-2xl mb-4 shadow-lg shadow-maroon-900/50 font-clarendon">P</div>
+                        <h1 className="text-2xl font-bold text-white font-clarendon">PULSE-R24</h1>
+                        <p className="text-intel-300 text-sm mt-1 uppercase tracking-widest font-inter">Admin Portal</p>
+                        <p className="text-intel-400 mt-2 text-sm">Enter your credentials to access the dashboard.</p>
                     </div>
                     <form onSubmit={handleLogin} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                            <label className="block text-sm font-medium text-intel-200 mb-1">Email</label>
                             <input
                                 type="email"
-                                className="w-full px-4 py-2 bg-white text-slate-900 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none transition-shadow"
+                                className="w-full px-4 py-2 bg-intel-900 text-white border border-intel-700 rounded-lg focus:ring-2 focus:ring-maroon-500 outline-none transition-shadow placeholder-intel-500"
                                 value={email}
                                 onChange={e => setEmail(e.target.value)}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                            <label className="block text-sm font-medium text-intel-200 mb-1">Password</label>
                             <input
                                 type="password"
-                                className="w-full px-4 py-2 bg-white text-slate-900 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none transition-shadow"
+                                className="w-full px-4 py-2 bg-intel-900 text-white border border-intel-700 rounded-lg focus:ring-2 focus:ring-maroon-500 outline-none transition-shadow"
                                 value={password}
                                 onChange={e => setPassword(e.target.value)}
                             />
                         </div>
-                        <Button type="submit" className="w-full justify-center py-3 text-base" disabled={loading || seeding}>
+                        <button type="submit" disabled={loading || seeding} className="w-full py-3 rounded-lg bg-maroon-600 hover:bg-maroon-500 text-white font-semibold text-base transition-colors disabled:opacity-50">
                             {loading ? 'Signing In...' : 'Sign In'}
-                        </Button>
+                        </button>
                     </form>
 
                     {errorDetails ? (
                         <>
                             <SetupInstructions errorDetails={errorDetails} />
-                            <Button
+                            <button
                                 onClick={handleManualSeed}
-                                variant="secondary"
-                                className="w-full mt-4 flex items-center gap-2"
                                 disabled={seeding}
+                                className="w-full mt-4 flex items-center justify-center gap-2 py-2 rounded-lg bg-intel-700 hover:bg-intel-600 text-white text-sm font-medium transition-colors disabled:opacity-50"
                             >
                                 {seeding ? <RefreshCw className="animate-spin" size={16} /> : <RefreshCw size={16} />}
                                 {seeding ? 'Initializing...' : '2. Initialize Database Data'}
-                            </Button>
+                            </button>
                         </>
                     ) : (
-                        <div className="mt-6 text-center text-xs text-slate-400 bg-slate-50 p-3 rounded border border-slate-200">
+                        <div className="mt-6 text-center text-xs text-intel-400 bg-intel-900 p-3 rounded border border-intel-700">
                             Demo Credentials:<br />
                             User: admin@demo.local<br />
                             Pass: demo123

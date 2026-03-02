@@ -139,8 +139,7 @@ function groupIntoLines(items: RawItem[], colLabel: 'left' | 'right' | 'full'): 
     if (!items.length) return [];
 
     // Sort by Y (top→bottom) then X (left→right)
-    // PDF coordinates have y=0 at bottom, so larger y is higher. Top→bottom = b.y - a.y
-    const sorted = [...items].sort((a, b) => Math.abs(a.y - b.y) > 2 ? b.y - a.y : a.x - b.x);
+    const sorted = [...items].sort((a, b) => Math.abs(a.y - b.y) > 2 ? a.y - b.y : a.x - b.x);
 
     const groups: { y: number; items: RawItem[] }[] = [];
     let cur: { y: number; items: RawItem[] } | null = null;
@@ -320,13 +319,15 @@ function buildNewsFields(allLines: DocLine[]): Omit<ParsedPdfFields, 'coverImage
     let currentPara: string[] = [];
     let prevY = -1;
 
+    console.log(`\n\n=== PDF SERVICE DEBUG ===\nTitle detected: "${title}"\nFound ${bodyLines.length} lines below title.`);
+
     for (const line of bodyLines) {
         if (isMetadataLine(line.text) && sections.length === 0 && currentPara.length === 0) {
             // Skip header metadata before any content starts
             continue;
         }
 
-        const isNewSection = prevY >= 0 && (prevY - line.y) > 16;
+        const isNewSection = prevY >= 0 && (line.y - prevY) > 16;
 
         if (line.isHeading && line.text.length < 120) {
             // Flush current paragraph
@@ -353,6 +354,10 @@ function buildNewsFields(allLines: DocLine[]): Omit<ParsedPdfFields, 'coverImage
         .map(s => s.replace(/\s+/g, ' ').trim())
         .filter(s => s.length > 2)
         .join('\n\n');
+
+    console.log(`Final sections count: ${sections.length}`);
+    console.log(`Final body length: ${body.length} characters`);
+    console.log(`=== END PDF DEBUG ===\n\n`);
 
     // ── Excerpt: first non-heading paragraph, max 350 chars
     const firstBodyPara = sections.find(s => !s.startsWith('#') && s.length > 30) || '';
@@ -408,14 +413,14 @@ export async function parsePdfToNewsFieldsFromFile(file: File): Promise<ParsedPd
             const rightLines = groupIntoLines(rightItems, 'right');
             const withHeadings = detectHeadings([...leftLines, ...rightLines]);
             // Re-sort: left column fully, then right column
-            const left = withHeadings.filter(l => l.column === 'left').sort((a, b) => b.y - a.y);
-            const right = withHeadings.filter(l => l.column === 'right').sort((a, b) => b.y - a.y);
+            const left = withHeadings.filter(l => l.column === 'left').sort((a, b) => a.y - b.y);
+            const right = withHeadings.filter(l => l.column === 'right').sort((a, b) => a.y - b.y);
             allLines.push(...left, ...right);
         } else {
             // Single column
             const pageLines = groupIntoLines(items, 'full');
             const withHeadings = detectHeadings(pageLines);
-            allLines.push(...withHeadings.sort((a, b) => b.y - a.y));
+            allLines.push(...withHeadings.sort((a, b) => a.y - b.y));
         }
     }
 
