@@ -5,7 +5,7 @@ export const Footer: React.FC = () => {
     const today = new Date();
 
     return (
-        <footer style={{ backgroundColor: '#050A24' }} className="border-t border-white/10 mt-20 pt-16 pb-8 font-inter">
+        <footer style={{ backgroundColor: '#0D1542' }} className="border-t border-white/10 mt-20 pt-16 pb-8 font-inter">
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
                 {/* Main Footer Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
