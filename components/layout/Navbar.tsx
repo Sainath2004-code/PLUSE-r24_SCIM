@@ -25,13 +25,13 @@ export const Navbar: React.FC = () => {
                             className="h-10 w-10 md:h-14 md:w-14 object-contain drop-shadow-sm transition-transform group-hover:scale-105"
                         />
                         <div className="hidden lg:block text-left">
-                            <p className="text-[11px] font-bold uppercase tracking-widest leading-tight text-gray-700 group-hover:text-maroon-600 transition-colors">
+                            <p className="text-[11px] font-bold uppercase tracking-widest leading-tight text-gray-700 group-hover:text-intel-900 transition-colors">
                                 Rashtriya Raksha
                             </p>
-                            <p className="text-[11px] font-bold uppercase tracking-widest leading-tight text-gray-700 group-hover:text-maroon-600 transition-colors">
+                            <p className="text-[11px] font-bold uppercase tracking-widest leading-tight text-gray-700 group-hover:text-intel-900 transition-colors">
                                 University
                             </p>
-                            <p className="text-[9px] text-gray-400 uppercase tracking-wider mt-0.5 group-hover:text-maroon-400 transition-colors">
+                            <p className="text-[9px] text-gray-400 uppercase tracking-wider mt-0.5 group-hover:text-intel-600 transition-colors">
                                 Puducherry Campus
                             </p>
                         </div>
