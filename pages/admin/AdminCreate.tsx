@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, Upload, Trash2, Clock, BookOpen, Calendar, Save } from 'lucide-react';
+import {
+    ChevronLeft, Upload, Trash2, Clock, BookOpen,
+    Calendar, Save, Image as ImageIcon, Tag, AlignLeft, FileText, Loader2
+} from 'lucide-react';
 import { storageService } from '../../services/storageService';
-import { NewsItem, LayoutTemplate, NewsStatus, NewsBlockValue } from '../../types';
+import { NewsItem, LayoutTemplate, NewsStatus } from '../../types';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { useToast } from '../../context/ToastContext';
@@ -11,173 +14,204 @@ import { useAutoSave } from '../../hooks/useAutoSave';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import { countWords, estimateReadingTime } from '../../utils/readingTime';
 
+// ── Fixed standard fields (same as PDF upload review form) ────────────────────
+// These fields are always shown regardless of which template was used.
+// On save, they map to block type names so both PDF-imported and manually-created
+// articles are stored consistently.
+
 export const AdminCreate: React.FC = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { addToast } = useToast();
-    const [loading, setLoading] = useState(false);
-    const [template, setTemplate] = useState<LayoutTemplate | null>(null);
-    const [formData, setFormData] = useState<Record<string, any>>({});
-    const [templates, setTemplates] = useState<LayoutTemplate[]>([]);
+    const imageFileRef = useRef<HTMLInputElement>(null);
+
+    // ── Form fields ──────────────────────────────────────────────────────────
+    const [title, setTitle] = useState('');
+    const [excerpt, setExcerpt] = useState('');
+    const [body, setBody] = useState('');
+    const [imageUrl, setImageUrl] = useState('');
+    const [imageCaption, setImageCaption] = useState('');
+    const [imageMode, setImageMode] = useState<'url' | 'upload'>('url');
+    const [imageUploading, setImageUploading] = useState(false);
+    const [tags, setTags] = useState('');
+    const [category, setCategory] = useState('');
+
+    // ── Metadata ─────────────────────────────────────────────────────────────
     const [itemStatus, setItemStatus] = useState<NewsStatus>('draft');
-    const [isDirty, setIsDirty] = useState(false);
     const [scheduledAt, setScheduledAt] = useState('');
     const [seoTitle, setSeoTitle] = useState('');
     const [seoDesc, setSeoDesc] = useState('');
-    const [wordCount, setWordCount] = useState(0);
-    const [readingTime, setReadingTime] = useState(1);
+    const [isDirty, setIsDirty] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [initialLoading, setInitialLoading] = useState(!!id);
     const [lastSavedLabel, setLastSavedLabel] = useState<string | null>(null);
+    const [existingItem, setExistingItem] = useState<NewsItem | undefined>();
+    const [template, setTemplate] = useState<LayoutTemplate | null>(null);
 
+    const wordCount = countWords(body);
+    const readingTime = estimateReadingTime(body);
+
+    // Mark dirty on any field change
+    const markDirty = () => setIsDirty(true);
+
+    // ── Load existing article when editing ────────────────────────────────────
     useEffect(() => {
         const init = async () => {
             const allTemplates = await storageService.getLayouts();
-            setTemplates(allTemplates);
+            setTemplate(allTemplates[0] || null);
 
             if (id) {
+                setInitialLoading(true);
                 const items = await storageService.getNewsItems();
                 const item = items.find(i => i.id === id);
                 if (item) {
+                    setExistingItem(item);
                     setItemStatus(item.status);
-                    const tpl = allTemplates.find(t => t.templateId === item.templateId) || allTemplates[0];
-                    setTemplate(tpl);
 
-                    // Build a lookup by BOTH blockId and type so PDF-imported articles
-                    // (which use type strings as blockIds like 'title', 'markdown') can
-                    // correctly pre-fill template fields that have UUID-based block IDs.
-                    const byId: Record<string, any> = {};
+                    // Extract field values by type (works for both PDF and normal articles)
                     const byType: Record<string, any> = {};
                     item.blocks.forEach(b => {
-                        byId[b.blockId] = b.value;
-                        // Only store first occurrence per type (avoids multi-image collision)
                         if (!(b.type in byType)) byType[b.type] = b.value;
                     });
 
-                    // Populate formData: prefer exact blockId match, fall back to type match
-                    const data: Record<string, any> = {};
-                    // Add all blockId-keyed values first
-                    Object.assign(data, byId);
-                    // For template blocks whose ID isn't in byId, try matching by type
-                    if (tpl) {
-                        tpl.blocks.forEach(tplBlock => {
-                            if (!(tplBlock.id in data) && tplBlock.type in byType) {
-                                data[tplBlock.id] = byType[tplBlock.type];
-                            }
-                        });
+                    setTitle(byType['title']?.toString() || '');
+                    setExcerpt(byType['excerpt']?.toString() || '');
+                    setBody(byType['markdown']?.toString() || '');
+                    setTags(
+                        Array.isArray(byType['tags'])
+                            ? byType['tags'].join(', ')
+                            : (byType['tags']?.toString() || '')
+                    );
+                    setCategory(byType['category']?.toString() || '');
+
+                    // Image: handle both { src, caption } object and plain string
+                    const imgVal = byType['image'];
+                    if (imgVal?.src) {
+                        setImageUrl(imgVal.src);
+                        setImageCaption(imgVal.caption || '');
+                    } else if (typeof imgVal === 'string' && imgVal) {
+                        setImageUrl(imgVal);
                     }
 
-                    setFormData(data);
                     if ((item as any).scheduledAt) setScheduledAt((item as any).scheduledAt.slice(0, 16));
                     if ((item as any).seoTitle) setSeoTitle((item as any).seoTitle);
                     if ((item as any).seoDescription) setSeoDesc((item as any).seoDescription);
                 }
-            } else if (allTemplates.length > 0) {
-                setTemplate(allTemplates[0]);
+                setInitialLoading(false);
             }
         };
         init();
     }, [id]);
 
-    // Live word count from markdown blocks
-    useEffect(() => {
-        const markdownBlock = template?.blocks.find(b => b.type === 'markdown');
-        const text = markdownBlock ? (formData[markdownBlock.id] ?? '') : '';
-        setWordCount(countWords(text));
-        setReadingTime(estimateReadingTime(text));
-    }, [formData, template]);
-
-    // Warn on unsaved changes
     useUnsavedChanges(isDirty);
 
-    const handleSave = useCallback(async (status: NewsStatus) => {
-        setLoading(true);
-        if (!template) return;
-
-        const blocks: NewsBlockValue[] = template.blocks.map(b => ({
-            blockId: b.id,
-            type: b.type,
-            value: formData[b.id]
-        })).filter(b => b.value !== undefined || b.type === 'divider');
-
-        let existingItem: NewsItem | undefined;
-        if (id) {
-            const items = await storageService.getNewsItems();
-            existingItem = items.find(i => i.id === id);
+    // ── Handle image upload ──────────────────────────────────────────────────
+    const handleImageUpload = async (file: File) => {
+        setImageUploading(true);
+        addToast('Uploading image…', 'info');
+        const url = await storageService.uploadImage(file);
+        setImageUploading(false);
+        if (url) {
+            setImageUrl(url);
+            markDirty();
+            addToast('Image uploaded!', 'success');
+        } else {
+            addToast('Upload failed. Ensure "news-images" bucket exists in Supabase.', 'error');
         }
-
-        const newItem: NewsItem = {
-            id: id || `news-${Date.now()}`,
-            templateId: template.templateId,
-            blocks,
-            // Preserve original creation date and author when editing
-            createdAt: existingItem ? existingItem.createdAt : new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            author: existingItem?.author || 'Admin',
-            tags: existingItem?.tags,
-            status,
-            // Preserve publishedAt: if already published and we're saving as draft, keep it
-            // so article can be re-published without losing the original date
-            publishedAt: status === 'published'
-                ? (existingItem?.publishedAt ?? new Date().toISOString())
-                : (existingItem?.publishedAt ?? undefined),
-            // Preserve PDF metadata
-            meta: existingItem?.meta,
-            // Extra CMS fields
-            ...(scheduledAt ? { scheduledAt: new Date(scheduledAt).toISOString() } : {}),
-            ...(seoTitle ? { seoTitle } : {}),
-            ...(seoDesc ? { seoDescription: seoDesc } : {}),
-        } as any;
-
-        await storageService.saveNewsItem(newItem);
-        setLoading(false);
-        setIsDirty(false);
-        setLastSavedLabel(`Saved at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
-        addToast(id ? 'Article updated' : 'Article created', 'success');
-        if (status !== 'draft') navigate('/admin/list');
-    }, [template, formData, id, scheduledAt, seoTitle, seoDesc, addToast, navigate]);
-
-    // Auto-save draft every 30s
-    useAutoSave(useCallback(async () => {
-        if (!isDirty || !template) return;
-        await handleSave('draft');
-    }, [isDirty, template, handleSave]));
-
-    const updateField = (blockId: string, value: any) => {
-        setFormData(prev => ({ ...prev, [blockId]: value }));
-        setIsDirty(true);
     };
 
-    if (!template && !loading) return <div>No templates found. Create one first.</div>;
+    // ── Save ─────────────────────────────────────────────────────────────────
+    const handleSave = useCallback(async (status: NewsStatus) => {
+        if (!title.trim()) { addToast('Title is required', 'error'); return; }
+        setLoading(true);
+
+        try {
+            // Build the template-compatible block list
+            // Use existing block IDs from the article if available, else fall back to type strings
+            const findBlockId = (type: string) => {
+                // Try matching from existing article's blocks
+                const existing = existingItem?.blocks.find(b => b.type === type);
+                if (existing) return existing.blockId;
+                // Try from template
+                const tplBlock = template?.blocks.find(b => b.type === type);
+                if (tplBlock) return tplBlock.id;
+                // Fallback to type string (PDF convention)
+                return type;
+            };
+
+            const tagArray = tags.split(',').map(t => t.trim()).filter(Boolean);
+
+            const blocks = [
+                { blockId: findBlockId('title'), type: 'title', value: title },
+                { blockId: findBlockId('excerpt'), type: 'excerpt', value: excerpt },
+                ...(imageUrl ? [{ blockId: findBlockId('image'), type: 'image', value: { src: imageUrl, caption: imageCaption } }] : []),
+                { blockId: findBlockId('markdown'), type: 'markdown', value: body },
+                { blockId: findBlockId('tags'), type: 'tags', value: tagArray },
+                ...(category ? [{ blockId: findBlockId('category'), type: 'category', value: category }] : []),
+            ].filter(b => b.value !== '' && b.value !== undefined && !(Array.isArray(b.value) && b.value.length === 0));
+
+            const newItem: NewsItem = {
+                id: id || `news-${Date.now()}`,
+                templateId: existingItem?.templateId || template?.templateId,
+                blocks,
+                createdAt: existingItem?.createdAt || new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                author: existingItem?.author || 'Admin',
+                tags: tagArray,
+                status,
+                publishedAt: status === 'published'
+                    ? (existingItem?.publishedAt || new Date().toISOString())
+                    : (existingItem?.publishedAt ?? undefined),
+                meta: existingItem?.meta,
+                ...(scheduledAt ? { scheduledAt: new Date(scheduledAt).toISOString() } : {}),
+                ...(seoTitle ? { seoTitle } : {}),
+                ...(seoDesc ? { seoDescription: seoDesc } : {}),
+            } as any;
+
+            await storageService.saveNewsItem(newItem);
+            setIsDirty(false);
+            setLastSavedLabel(`Saved at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+            addToast(id ? 'Article updated ✓' : 'Article created ✓', 'success');
+            if (status !== 'draft') navigate('/admin/list');
+        } catch (err: any) {
+            addToast(`Save failed: ${err?.message || 'Unknown error'}`, 'error');
+        } finally {
+            setLoading(false);
+        }
+    }, [title, excerpt, body, imageUrl, imageCaption, tags, category, itemStatus, scheduledAt, seoTitle, seoDesc, existingItem, template, id, addToast, navigate]);
+
+    // Auto-save draft every 30s when dirty
+    useAutoSave(useCallback(async () => {
+        if (!isDirty || !title.trim()) return;
+        await handleSave('draft');
+    }, [isDirty, title, handleSave]));
+
+    if (initialLoading) return (
+        <div className="max-w-6xl mx-auto pb-20 flex items-center justify-center pt-20 gap-3 text-slate-500">
+            <Loader2 size={20} className="animate-spin" />
+            <span>Loading article…</span>
+        </div>
+    );
+
+    const inputCls = "w-full px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none transition text-sm";
 
     return (
         <div className="max-w-6xl mx-auto pb-20">
-            {/* Header */}
+            {/* ── Header ── */}
             <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                 <div className="flex items-center gap-3">
                     <Link to="/admin/list" className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors">
                         <ChevronLeft size={20} />
                     </Link>
                     <div>
-                        <h1 className="text-xl font-bold text-slate-900 dark:text-white">{id ? 'Edit Article' : 'Create Article'}</h1>
-                        {lastSavedLabel ? (
-                            <p className="text-xs text-emerald-500 flex items-center gap-1 mt-0.5">
-                                <Save size={10} /> {lastSavedLabel}
-                            </p>
-                        ) : isDirty ? (
-                            <p className="text-xs text-amber-500 mt-0.5">Unsaved changes</p>
-                        ) : null}
+                        <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+                            {id ? 'Edit Article' : 'Create Article'}
+                        </h1>
+                        {lastSavedLabel
+                            ? <p className="text-xs text-emerald-500 flex items-center gap-1 mt-0.5"><Save size={10} /> {lastSavedLabel}</p>
+                            : isDirty ? <p className="text-xs text-amber-500 mt-0.5">Unsaved changes</p> : null
+                        }
                     </div>
-                    {!id && templates.length > 1 && (
-                        <select
-                            className="ml-2 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none"
-                            value={template?.templateId}
-                            onChange={e => {
-                                const t = templates.find(tpl => tpl.templateId === e.target.value);
-                                if (t) { setTemplate(t); setFormData({}); }
-                            }}
-                        >
-                            {templates.map(t => <option key={t.templateId} value={t.templateId}>{t.name}</option>)}
-                        </select>
-                    )}
                 </div>
                 <div className="flex items-center gap-2">
                     <button
@@ -185,22 +219,18 @@ export const AdminCreate: React.FC = () => {
                         disabled={loading}
                         className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
                     >
-                        <Save size={14} /> {loading ? 'Saving...' : 'Save Draft'}
+                        <Save size={14} /> {loading ? 'Saving…' : 'Save Draft'}
                     </button>
                     <Button onClick={() => handleSave('pending_approval')} disabled={loading}>
-                        {loading ? 'Submitting...' : 'Submit for Approval'}
+                        {loading ? 'Submitting…' : 'Submit for Approval'}
                     </Button>
-                    <Button
-                        onClick={() => handleSave('published')}
-                        disabled={loading}
-                        className="!bg-emerald-600 hover:!bg-emerald-700"
-                    >
-                        Publish
+                    <Button onClick={() => handleSave('published')} disabled={loading} className="!bg-emerald-600 hover:!bg-emerald-700">
+                        {loading ? 'Publishing…' : 'Publish'}
                     </Button>
                 </div>
             </div>
 
-            {/* Stats bar */}
+            {/* ── Stats bar ── */}
             <div className="flex items-center gap-6 mb-6 px-1">
                 <span className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                     <Clock size={13} /> {wordCount.toLocaleString()} words
@@ -211,136 +241,169 @@ export const AdminCreate: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-12 gap-6">
-                {template?.blocks.map(block => (
-                    <div key={block.id} className={`col-span-12 lg:col-span-${block.grid?.colSpan || 12}`}>
-                        <Card className="p-6 h-full flex flex-col">
-                            <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center justify-between">
-                                {block.label}
-                                <span className="text-xs text-slate-400 font-normal uppercase">{block.type}</span>
-                            </label>
+                {/* ══ MAIN CONTENT AREA ══════════════════════════════════════ */}
+                <div className="col-span-12 lg:col-span-9 space-y-5">
 
-                            {block.type === 'markdown' ? (
-                                <MarkdownEditor value={formData[block.id] || ''} onChange={(v) => updateField(block.id, v)} />
-                            ) : block.type === 'image' ? (
-                                <div className="space-y-3">
-                                    <div className="flex gap-2 mb-1">
-                                        <button
-                                            type="button"
-                                            className={`text-xs font-bold px-3 py-1.5 rounded-full transition-colors ${!formData[block.id]?.useUpload ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-                                            onClick={() => updateField(block.id, { ...formData[block.id], useUpload: false })}
-                                        >
-                                            Image URL
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className={`text-xs font-bold px-3 py-1.5 rounded-full transition-colors ${formData[block.id]?.useUpload ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-                                            onClick={() => updateField(block.id, { ...formData[block.id], useUpload: true })}
-                                        >
-                                            Upload Image
-                                        </button>
+                    {/* ── Title ── */}
+                    <Card className="p-5">
+                        <label className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">
+                            <FileText size={15} className="text-brand-500" /> Headline / Title
+                            <span className="ml-auto text-xs text-slate-400 font-normal">required</span>
+                        </label>
+                        <input
+                            type="text"
+                            className={inputCls + ' text-base font-semibold'}
+                            placeholder="e.g. PULSE-R24 Daily Threat Intelligence Bulletin"
+                            value={title}
+                            onChange={e => { setTitle(e.target.value); markDirty(); }}
+                        />
+                    </Card>
+
+                    {/* ── Excerpt / Summary ── */}
+                    <Card className="p-5">
+                        <label className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">
+                            <AlignLeft size={15} className="text-brand-500" /> Excerpt / Summary
+                        </label>
+                        <textarea
+                            rows={3}
+                            className={inputCls + ' resize-none'}
+                            placeholder="Brief summary shown on the homepage feed…"
+                            value={excerpt}
+                            onChange={e => { setExcerpt(e.target.value); markDirty(); }}
+                        />
+                    </Card>
+
+                    {/* ── Cover Image ── */}
+                    <Card className="p-5">
+                        <label className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200 mb-3">
+                            <ImageIcon size={15} className="text-brand-500" /> Cover Image
+                            <span className="ml-auto text-xs text-slate-400 font-normal">optional</span>
+                        </label>
+
+                        {/* Mode switcher */}
+                        <div className="flex gap-2 mb-3">
+                            {['url', 'upload'].map(m => (
+                                <button
+                                    key={m}
+                                    type="button"
+                                    onClick={() => setImageMode(m as 'url' | 'upload')}
+                                    className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${imageMode === m ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-400'}`}
+                                >
+                                    {m === 'url' ? 'Image URL' : 'Upload File'}
+                                </button>
+                            ))}
+                        </div>
+
+                        {imageMode === 'url' ? (
+                            <input
+                                type="text"
+                                className={inputCls}
+                                placeholder="https://example.com/image.jpg"
+                                value={imageUrl}
+                                onChange={e => { setImageUrl(e.target.value); markDirty(); }}
+                            />
+                        ) : (
+                            <div
+                                className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-6 text-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer group"
+                                onClick={() => imageFileRef.current?.click()}
+                            >
+                                <input
+                                    ref={imageFileRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={e => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); }}
+                                />
+                                {imageUploading ? (
+                                    <div className="flex flex-col items-center gap-2 text-brand-500">
+                                        <Loader2 size={24} className="animate-spin" />
+                                        <span className="text-xs">Uploading…</span>
                                     </div>
+                                ) : (
+                                    <div className="flex flex-col items-center gap-2 text-slate-400 group-hover:text-brand-500 transition-colors">
+                                        <Upload size={24} />
+                                        <span className="text-sm font-medium">Click to upload image</span>
+                                        <span className="text-xs text-slate-300">PNG, JPG, GIF (max 2MB)</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
-                                    {formData[block.id]?.useUpload ? (
-                                        <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:bg-slate-50 transition-colors relative group cursor-pointer">
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                                onChange={async (e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (file) {
-                                                        addToast('Uploading image...', 'info');
-                                                        const url = await storageService.uploadImage(file);
-                                                        if (url) {
-                                                            updateField(block.id, { ...formData[block.id], src: url });
-                                                            addToast('Image uploaded successfully!', 'success');
-                                                        } else {
-                                                            addToast('Upload failed. Ensure "news-images" bucket exists and is public.', 'error');
-                                                        }
-                                                    }
-                                                }}
-                                            />
-                                            <div className="flex flex-col items-center gap-2 text-slate-400 group-hover:text-brand-500 transition-colors">
-                                                <Upload size={32} />
-                                                <span className="text-sm font-medium">Click to upload or drag and drop</span>
-                                                <span className="text-xs text-slate-400">SVG, PNG, JPG or GIF (max. 2MB)</span>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                placeholder="Image URL (e.g. https://picsum.photos/800/400)"
-                                                className="flex-1 px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
-                                                value={formData[block.id]?.src || ''}
-                                                onChange={(e) => updateField(block.id, { ...formData[block.id], src: e.target.value })}
-                                            />
-                                            <Button variant="secondary" onClick={() => updateField(block.id, { ...formData[block.id], src: `https://picsum.photos/800/400?r=${Math.random()}` })}>Random</Button>
-                                        </div>
-                                    )}
+                        {/* Caption */}
+                        <input
+                            type="text"
+                            className={inputCls + ' mt-3'}
+                            placeholder="Image caption (optional)"
+                            value={imageCaption}
+                            onChange={e => { setImageCaption(e.target.value); markDirty(); }}
+                        />
 
-                                    <input
-                                        type="text" placeholder="Caption"
-                                        className="w-full px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none"
-                                        value={formData[block.id]?.caption || ''}
-                                        onChange={(e) => updateField(block.id, { ...formData[block.id], caption: e.target.value })}
-                                    />
-                                    {formData[block.id]?.src && (
-                                        <div className="h-48 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 relative group">
-                                            <img src={formData[block.id].src} className="w-full h-full object-cover" alt="Preview" />
-                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                                            <button
-                                                className="absolute top-2 right-2 bg-white p-2 rounded-lg text-red-500 opacity-0 group-hover:opacity-100 transition-all shadow-sm hover:text-red-600 hover:bg-red-50 transform translate-y-2 group-hover:translate-y-0"
-                                                onClick={() => updateField(block.id, { ...formData[block.id], src: '' })}
-                                                title="Remove Image"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            ) : block.type === 'tags' ? (
-                                <input
-                                    type="text"
-                                    placeholder="tech, news, release (comma separated)"
-                                    className="w-full px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
-                                    value={Array.isArray(formData[block.id]) ? formData[block.id].join(', ') : (formData[block.id] || '')}
-                                    onChange={(e) => updateField(block.id, e.target.value.split(',').map((s: string) => s.trim()))}
-                                />
-                            ) : block.type === 'publishDate' ? (
-                                <input
-                                    type="datetime-local"
-                                    className="w-full px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
-                                    value={formData[block.id] ? new Date(formData[block.id]).toISOString().slice(0, 16) : ''}
-                                    onChange={(e) => updateField(block.id, new Date(e.target.value).toISOString())}
-                                />
-                            ) : block.type === 'divider' ? (
-                                <div className="py-4 px-2">
-                                    <hr className="border-slate-300 border-dashed" />
-                                    <p className="text-center text-xs text-slate-400 mt-2 font-mono">--- Divider Line ---</p>
-                                </div>
-                            ) : (
-                                <input
-                                    type="text"
-                                    className="w-full px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
-                                    value={formData[block.id] || ''}
-                                    onChange={(e) => updateField(block.id, e.target.value)}
-                                />
-                            )}
+                        {/* Preview */}
+                        {imageUrl && (
+                            <div className="mt-3 h-52 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 relative group">
+                                <img src={imageUrl} alt="Cover preview" className="w-full h-full object-cover" />
+                                <button
+                                    className="absolute top-2 right-2 bg-white dark:bg-slate-800 p-1.5 rounded-lg text-red-500 opacity-0 group-hover:opacity-100 transition-all shadow hover:bg-red-50"
+                                    onClick={() => { setImageUrl(''); setImageCaption(''); markDirty(); }}
+                                    title="Remove image"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                        )}
+                    </Card>
+
+                    {/* ── Body Content ── */}
+                    <Card className="p-5">
+                        <label className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200 mb-3">
+                            <AlignLeft size={15} className="text-brand-500" /> Body Content
+                            <span className="ml-auto text-xs text-slate-400 font-normal">Markdown supported</span>
+                        </label>
+                        <MarkdownEditor
+                            value={body}
+                            onChange={v => { setBody(v); markDirty(); }}
+                        />
+                    </Card>
+
+                    {/* ── Tags & Category ── */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <Card className="p-5">
+                            <label className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">
+                                <Tag size={15} className="text-brand-500" /> Tags
+                            </label>
+                            <input
+                                type="text"
+                                className={inputCls}
+                                placeholder="threat, malware, india (comma separated)"
+                                value={tags}
+                                onChange={e => { setTags(e.target.value); markDirty(); }}
+                            />
+                        </Card>
+                        <Card className="p-5">
+                            <label className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">
+                                Category
+                            </label>
+                            <input
+                                type="text"
+                                className={inputCls}
+                                placeholder="e.g. Intelligence, Malware, APT"
+                                value={category}
+                                onChange={e => { setCategory(e.target.value); markDirty(); }}
+                            />
                         </Card>
                     </div>
-                ))}
+                </div>
 
-                {/* ── SIDEBAR PANEL ── */}
+                {/* ══ SIDEBAR ══════════════════════════════════════════════ */}
                 <div className="col-span-12 lg:col-span-3 space-y-4">
 
-                    {/* Publish status */}
+                    {/* Publish Status */}
                     <Card className="p-4">
                         <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3">Publish Status</p>
                         <select
                             className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-400 outline-none"
                             value={itemStatus}
-                            onChange={e => { setItemStatus(e.target.value as NewsStatus); setIsDirty(true); }}
+                            onChange={e => { setItemStatus(e.target.value as NewsStatus); markDirty(); }}
                         >
                             <option value="draft">Draft</option>
                             <option value="pending_approval">Pending Approval</option>
@@ -357,7 +420,7 @@ export const AdminCreate: React.FC = () => {
                             type="datetime-local"
                             className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-400 outline-none mt-2"
                             value={scheduledAt}
-                            onChange={e => { setScheduledAt(e.target.value); setIsDirty(true); }}
+                            onChange={e => { setScheduledAt(e.target.value); markDirty(); }}
                         />
                         {scheduledAt && (
                             <p className="text-xs text-slate-400 mt-1.5">Publishes on {new Date(scheduledAt).toLocaleString()}</p>
@@ -366,7 +429,7 @@ export const AdminCreate: React.FC = () => {
 
                     {/* SEO */}
                     <Card className="p-4 space-y-3">
-                        <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">SEO</p>
+                        <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">SEO (optional)</p>
                         <div>
                             <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-1">
                                 SEO Title <span className={`ml-1 font-normal ${seoTitle.length > 60 ? 'text-red-500' : 'text-slate-400'}`}>({seoTitle.length}/60)</span>
@@ -376,8 +439,8 @@ export const AdminCreate: React.FC = () => {
                                 maxLength={70}
                                 className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-400 outline-none"
                                 value={seoTitle}
-                                onChange={e => { setSeoTitle(e.target.value); setIsDirty(true); }}
-                                placeholder="Override page title"
+                                onChange={e => { setSeoTitle(e.target.value); markDirty(); }}
+                                placeholder="Override page title for Google"
                             />
                         </div>
                         <div>
@@ -386,25 +449,33 @@ export const AdminCreate: React.FC = () => {
                             </label>
                             <textarea
                                 rows={3}
-                                maxLength={180}
-                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-400 outline-none resize-none"
+                                maxLength={175}
+                                className="w-full px-3 pb-2 pt-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-400 outline-none resize-none"
                                 value={seoDesc}
-                                onChange={e => { setSeoDesc(e.target.value); setIsDirty(true); }}
+                                onChange={e => { setSeoDesc(e.target.value); markDirty(); }}
                                 placeholder="Search engine description"
                             />
                         </div>
                     </Card>
 
-                    {/* Stats */}
-                    <Card className="p-4 space-y-2">
-                        <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Article Stats</p>
-                        <div className="flex items-center justify-between text-sm">
-                            <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1.5"><Clock size={13} /> Words</span>
-                            <span className="font-bold text-slate-800 dark:text-white">{wordCount.toLocaleString()}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                            <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1.5"><BookOpen size={13} /> Read time</span>
-                            <span className="font-bold text-slate-800 dark:text-white">{readingTime} min</span>
+                    {/* Article Stats */}
+                    <Card className="p-4">
+                        <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3">Article Stats</p>
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-slate-500">Words</span>
+                                <span className="font-semibold text-slate-800 dark:text-white">{wordCount.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-slate-500">Read time</span>
+                                <span className="font-semibold text-slate-800 dark:text-white">{readingTime} min</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-slate-500">Status</span>
+                                <span className={`font-semibold capitalize ${itemStatus === 'published' ? 'text-emerald-600' : itemStatus === 'pending_approval' ? 'text-amber-600' : 'text-slate-500'}`}>
+                                    {itemStatus.replace('_', ' ')}
+                                </span>
+                            </div>
                         </div>
                     </Card>
                 </div>
