@@ -84,15 +84,14 @@ export const AdminPdfUpload: React.FC = () => {
         setStage('extracting');
 
         try {
-            setExtractProgress('Reading PDF layout and pages…');
-            // Small pause so spinner renders
-            await new Promise(r => setTimeout(r, 100));
+            setExtractProgress('📄 Reading PDF layout and detecting columns…');
+            await new Promise(r => setTimeout(r, 80));
 
-            setExtractProgress('Detecting headings and structure…');
+            setExtractProgress('🔍 Analysing headings, sections, and body text…');
             const fields = await parsePdfToNewsFieldsFromFile(file);
 
-            setExtractProgress('Separating title, summary, and body…');
-            await new Promise(r => setTimeout(r, 300)); // brief UX pause
+            setExtractProgress('✂️ Separating title, summary, and body content…');
+            await new Promise(r => setTimeout(r, 200));
 
             setTitle(fields.title);
             setExcerpt(fields.excerpt);
@@ -100,10 +99,31 @@ export const AdminPdfUpload: React.FC = () => {
             setTags(fields.tags.join(', '));
             setCategory(fields.category);
 
-            // Optionally upload the PDF to storage for reference link
-            setExtractProgress('Uploading PDF to storage…');
-            const url = await storageService.uploadPdf(file);
-            if (url) setPdfUrl(url);
+            // ── Auto cover image: upload rendered page-1 JPEG
+            if (fields.coverImageBlob) {
+                setExtractProgress('🖼️ Uploading cover image (rendered from PDF page 1)…');
+                const imageFile = new File(
+                    [fields.coverImageBlob],
+                    `pdf-cover-${Date.now()}.jpg`,
+                    { type: 'image/jpeg' }
+                );
+                const uploadedUrl = await storageService.uploadImage(imageFile);
+                if (uploadedUrl) {
+                    setImageUrl(uploadedUrl);
+                    setImageCaption('Cover image extracted from PDF');
+                    addToast('📸 Cover image auto-extracted from PDF!', 'success');
+                } else {
+                    // Supabase bucket missing — use local blob URL as preview fallback
+                    const blobUrl = URL.createObjectURL(fields.coverImageBlob);
+                    setImageUrl(blobUrl);
+                    setImageCaption('PDF page 1 preview');
+                }
+            }
+
+            // Upload PDF itself for reference link
+            setExtractProgress('☁️ Uploading PDF to storage…');
+            const pdfUploadUrl = await storageService.uploadPdf(file);
+            if (pdfUploadUrl) setPdfUrl(pdfUploadUrl);
 
             setStage('review');
         } catch (err: any) {
