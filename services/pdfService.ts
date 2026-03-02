@@ -139,7 +139,8 @@ function groupIntoLines(items: RawItem[], colLabel: 'left' | 'right' | 'full'): 
     if (!items.length) return [];
 
     // Sort by Y (top→bottom) then X (left→right)
-    const sorted = [...items].sort((a, b) => a.y !== b.y ? a.y - b.y : a.x - b.x);
+    // PDF coordinates have y=0 at bottom, so larger y is higher. Top→bottom = b.y - a.y
+    const sorted = [...items].sort((a, b) => Math.abs(a.y - b.y) > 2 ? b.y - a.y : a.x - b.x);
 
     const groups: { y: number; items: RawItem[] }[] = [];
     let cur: { y: number; items: RawItem[] } | null = null;
@@ -325,7 +326,7 @@ function buildNewsFields(allLines: DocLine[]): Omit<ParsedPdfFields, 'coverImage
             continue;
         }
 
-        const isNewSection = prevY >= 0 && (line.y - prevY) > 16;
+        const isNewSection = prevY >= 0 && (prevY - line.y) > 16;
 
         if (line.isHeading && line.text.length < 120) {
             // Flush current paragraph
@@ -407,14 +408,14 @@ export async function parsePdfToNewsFieldsFromFile(file: File): Promise<ParsedPd
             const rightLines = groupIntoLines(rightItems, 'right');
             const withHeadings = detectHeadings([...leftLines, ...rightLines]);
             // Re-sort: left column fully, then right column
-            const left = withHeadings.filter(l => l.column === 'left').sort((a, b) => a.y - b.y);
-            const right = withHeadings.filter(l => l.column === 'right').sort((a, b) => a.y - b.y);
+            const left = withHeadings.filter(l => l.column === 'left').sort((a, b) => b.y - a.y);
+            const right = withHeadings.filter(l => l.column === 'right').sort((a, b) => b.y - a.y);
             allLines.push(...left, ...right);
         } else {
             // Single column
             const pageLines = groupIntoLines(items, 'full');
             const withHeadings = detectHeadings(pageLines);
-            allLines.push(...withHeadings.sort((a, b) => a.y - b.y));
+            allLines.push(...withHeadings.sort((a, b) => b.y - a.y));
         }
     }
 
