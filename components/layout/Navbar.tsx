@@ -18,7 +18,7 @@ export const Navbar: React.FC = () => {
                 <div className="flex flex-wrap md:grid md:grid-cols-3 items-center justify-between gap-y-3">
 
                     {/* LEFT — RRU Logo */}
-                    <a href="https://rru.ac.in/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-3 order-1 md:order-none group hover:opacity-90 transition-all cursor-pointer">
+                    <a href="https://rru.ac.in/campuses/puducherry" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-3 order-1 md:order-none group hover:opacity-90 transition-all cursor-pointer">
                         <img
                             src="/logos/rru-logo.png"
                             alt="Rashtriya Raksha University"
