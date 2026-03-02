@@ -40,8 +40,31 @@ export const AdminCreate: React.FC = () => {
                     setItemStatus(item.status);
                     const tpl = allTemplates.find(t => t.templateId === item.templateId) || allTemplates[0];
                     setTemplate(tpl);
+
+                    // Build a lookup by BOTH blockId and type so PDF-imported articles
+                    // (which use type strings as blockIds like 'title', 'markdown') can
+                    // correctly pre-fill template fields that have UUID-based block IDs.
+                    const byId: Record<string, any> = {};
+                    const byType: Record<string, any> = {};
+                    item.blocks.forEach(b => {
+                        byId[b.blockId] = b.value;
+                        // Only store first occurrence per type (avoids multi-image collision)
+                        if (!(b.type in byType)) byType[b.type] = b.value;
+                    });
+
+                    // Populate formData: prefer exact blockId match, fall back to type match
                     const data: Record<string, any> = {};
-                    item.blocks.forEach(b => { data[b.blockId] = b.value; });
+                    // Add all blockId-keyed values first
+                    Object.assign(data, byId);
+                    // For template blocks whose ID isn't in byId, try matching by type
+                    if (tpl) {
+                        tpl.blocks.forEach(tplBlock => {
+                            if (!(tplBlock.id in data) && tplBlock.type in byType) {
+                                data[tplBlock.id] = byType[tplBlock.type];
+                            }
+                        });
+                    }
+
                     setFormData(data);
                     if ((item as any).scheduledAt) setScheduledAt((item as any).scheduledAt.slice(0, 16));
                     if ((item as any).seoTitle) setSeoTitle((item as any).seoTitle);
@@ -85,12 +108,20 @@ export const AdminCreate: React.FC = () => {
             id: id || `news-${Date.now()}`,
             templateId: template.templateId,
             blocks,
+            // Preserve original creation date and author when editing
             createdAt: existingItem ? existingItem.createdAt : new Date().toISOString(),
             updatedAt: new Date().toISOString(),
+            author: existingItem?.author || 'Admin',
+            tags: existingItem?.tags,
             status,
-            publishedAt: status === 'published' ? new Date().toISOString() : (existingItem?.publishedAt ?? undefined),
-            author: 'Admin',
-            // Extra CMS fields stored at top level for future schema
+            // Preserve publishedAt: if already published and we're saving as draft, keep it
+            // so article can be re-published without losing the original date
+            publishedAt: status === 'published'
+                ? (existingItem?.publishedAt ?? new Date().toISOString())
+                : (existingItem?.publishedAt ?? undefined),
+            // Preserve PDF metadata
+            meta: existingItem?.meta,
+            // Extra CMS fields
             ...(scheduledAt ? { scheduledAt: new Date(scheduledAt).toISOString() } : {}),
             ...(seoTitle ? { seoTitle } : {}),
             ...(seoDesc ? { seoDescription: seoDesc } : {}),
