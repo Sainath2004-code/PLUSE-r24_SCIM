@@ -219,7 +219,10 @@ export const storageService = {
     const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`;
     const { data, error } = await supabase.storage
       .from('news-images')
-      .upload(fileName, file);
+      .upload(fileName, file, {
+        contentType: file.type,
+        upsert: true
+      });
 
     if (error) {
       console.error('Error uploading image:', error);
