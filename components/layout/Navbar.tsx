@@ -18,20 +18,20 @@ export const Navbar: React.FC = () => {
                 <div className="flex flex-wrap md:grid md:grid-cols-3 items-center justify-between gap-y-3">
 
                     {/* LEFT — RRU Logo */}
-                    <a href="https://rru.ac.in/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-3 order-1 md:order-none hover:opacity-80 transition-opacity cursor-pointer">
+                    <a href="https://rru.ac.in/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-3 order-1 md:order-none group hover:opacity-90 transition-all cursor-pointer">
                         <img
                             src="/logos/rru-logo.png"
                             alt="Rashtriya Raksha University"
-                            className="h-10 w-10 md:h-14 md:w-14 object-contain drop-shadow-sm"
+                            className="h-10 w-10 md:h-14 md:w-14 object-contain drop-shadow-sm transition-transform group-hover:scale-105"
                         />
-                        <div className="hidden lg:block text-left relative z-10 hover:text-maroon-600 transition-colors">
-                            <p className="text-[11px] font-bold uppercase tracking-widest leading-tight currentColor">
+                        <div className="hidden lg:block text-left">
+                            <p className="text-[11px] font-bold uppercase tracking-widest leading-tight text-gray-700 group-hover:text-maroon-600 transition-colors">
                                 Rashtriya Raksha
                             </p>
-                            <p className="text-[11px] font-bold uppercase tracking-widest leading-tight currentColor">
+                            <p className="text-[11px] font-bold uppercase tracking-widest leading-tight text-gray-700 group-hover:text-maroon-600 transition-colors">
                                 University
                             </p>
-                            <p className="text-[9px] text-gray-400 uppercase tracking-wider mt-0.5">
+                            <p className="text-[9px] text-gray-400 uppercase tracking-wider mt-0.5 group-hover:text-maroon-400 transition-colors">
                                 Puducherry Campus
                             </p>
                         </div>
