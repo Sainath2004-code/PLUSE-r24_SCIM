@@ -11,7 +11,7 @@ export const Footer: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
                     {/* Brand & Newsletter */}
                     <div className="col-span-1 md:col-span-2">
-                        <h2 className="font-clarendon text-3xl font-black text-red-400 mb-4">PULSE-R<sup className="text-xl">24</sup></h2>
+                        <h2 className="font-clarendon text-3xl font-black text-maroon-600 mb-4">PULSE-R<sup className="text-xl">24</sup></h2>
                         <p className="text-white/60 text-sm leading-relaxed mb-8 max-w-sm">
                             Where the nation's security pulse meets insight. Delivers forward-looking updates on emerging risks and developments impacting business continuity and organizational resilience.
                         </p>
