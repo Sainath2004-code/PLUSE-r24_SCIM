@@ -72,23 +72,23 @@ export const AdminLayout: React.FC = () => {
     const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
 
     return (
-        <div className="flex h-screen bg-slate-50 dark:bg-slate-950 font-inter overflow-hidden">
+        <div className="flex h-screen bg-gray-50 dark:bg-slate-950 font-inter overflow-hidden">
 
             {/* ── SIDEBAR ── */}
-            <aside className={`${sidebarOpen ? 'w-60' : 'w-16'} transition-all duration-200 bg-intel-900 dark:bg-intel-950 border-r border-intel-800 flex flex-col shrink-0`}>
+            <aside className={`${sidebarOpen ? 'w-60' : 'w-16'} transition-all duration-200 bg-intel-950 border-r border-intel-800 flex flex-col shrink-0`}>
 
                 {/* Logo */}
-                <div className="h-14 flex items-center px-4 border-b border-intel-800 shrink-0">
+                <div className="h-14 flex items-center px-4 border-b border-intel-900 shrink-0">
                     {sidebarOpen ? (
                         <Link to="/admin/dashboard" className="flex items-center gap-2.5 min-w-0">
-                            <div className="w-7 h-7 rounded-lg bg-maroon-600 flex items-center justify-center text-white font-bold text-xs shrink-0">P</div>
+                            <div className="w-7 h-7 rounded bg-maroon-600 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-sm">P</div>
                             <div className="overflow-hidden">
-                                <p className="text-white font-bold text-sm leading-none truncate font-clarendon">PULSE-R24</p>
-                                <p className="text-intel-300 text-[10px] uppercase tracking-wider mt-0.5">Admin CMS</p>
+                                <p className="text-white font-black text-sm leading-none truncate font-clarendon tracking-tight">PULSE-R24</p>
+                                <p className="text-intel-400 text-[9px] uppercase tracking-[0.2em] mt-1 font-mono font-bold">Intelligence CMS</p>
                             </div>
                         </Link>
                     ) : (
-                        <div className="w-7 h-7 rounded-lg bg-maroon-600 flex items-center justify-center text-white font-bold text-xs mx-auto">P</div>
+                        <div className="w-7 h-7 rounded bg-maroon-600 flex items-center justify-center text-white font-bold text-xs mx-auto shadow-sm">P</div>
                     )}
                 </div>
 
@@ -97,9 +97,9 @@ export const AdminLayout: React.FC = () => {
                     {NAV_SECTIONS.map(section => (
                         <div key={section.label}>
                             {sidebarOpen && (
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-intel-400 px-2 mb-2">{section.label}</p>
+                                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-intel-500 px-3 mb-2.5">{section.label}</p>
                             )}
-                            <div className="space-y-0.5">
+                            <div className="space-y-1">
                                 {section.items.map(item => {
                                     const active = isActive(item.path);
                                     return (
@@ -107,13 +107,13 @@ export const AdminLayout: React.FC = () => {
                                             key={item.path + item.label}
                                             to={item.path}
                                             title={!sidebarOpen ? item.label : undefined}
-                                            className={`flex items-center gap-3 px-2.5 py-2 rounded-lg transition-colors group ${active
-                                                    ? 'bg-maroon-600 text-white'
-                                                    : 'text-intel-200 hover:bg-intel-800 hover:text-white'
+                                            className={`flex items-center gap-3 px-3 py-2 rounded transition-all group ${active
+                                                    ? 'bg-maroon-600 text-white shadow-md'
+                                                    : 'text-intel-300 hover:bg-intel-900 hover:text-white'
                                                 }`}
                                         >
-                                            <item.icon size={17} className="shrink-0" />
-                                            {sidebarOpen && <span className="text-sm font-medium truncate">{item.label}</span>}
+                                            <item.icon size={16} className={`shrink-0 ${active ? 'text-white' : 'text-intel-500 group-hover:text-maroon-400 transition-colors'}`} />
+                                            {sidebarOpen && <span className="text-sm font-semibold truncate tracking-tight">{item.label}</span>}
                                         </Link>
                                     );
                                 })}
@@ -123,28 +123,28 @@ export const AdminLayout: React.FC = () => {
                 </nav>
 
                 {/* User footer */}
-                <div className="p-3 border-t border-intel-800 shrink-0">
+                <div className="p-3 border-t border-intel-900 shrink-0 bg-intel-950/50">
                     {sidebarOpen ? (
                         <div className="flex items-center gap-3 px-2 py-2">
-                            <div className="w-8 h-8 rounded-full bg-maroon-700 flex items-center justify-center text-maroon-200 font-bold text-sm shrink-0">
+                            <div className="w-8 h-8 rounded bg-intel-800 border border-intel-700 flex items-center justify-center text-maroon-400 font-bold text-sm shrink-0">
                                 {admin.name.charAt(0).toUpperCase()}
                             </div>
                             <div className="flex-1 overflow-hidden">
-                                <p className="text-sm font-semibold text-white truncate">{admin.name}</p>
-                                <p className="text-[10px] text-slate-500 truncate">{admin.email}</p>
+                                <p className="text-[13px] font-bold text-white truncate">{admin.name}</p>
+                                <p className="text-[10px] text-intel-500 truncate font-mono">{admin.email}</p>
                             </div>
                             <button
                                 onClick={handleLogout}
-                                className="text-slate-500 hover:text-red-400 transition-colors p-1"
+                                className="text-intel-500 hover:text-maroon-400 transition-colors p-1"
                                 title="Sign out"
                             >
-                                <LogOut size={15} />
+                                <LogOut size={14} />
                             </button>
                         </div>
                     ) : (
                         <button
                             onClick={handleLogout}
-                            className="w-full flex justify-center text-slate-500 hover:text-red-400 py-2 transition-colors"
+                            className="w-full flex justify-center text-intel-500 hover:text-maroon-400 py-2 transition-colors"
                             title="Sign out"
                         >
                             <LogOut size={16} />
@@ -157,60 +157,63 @@ export const AdminLayout: React.FC = () => {
             <div className="flex-1 flex flex-col overflow-hidden">
 
                 {/* ── TOPBAR ── */}
-                <header className="h-14 bg-white dark:bg-intel-900 border-b border-slate-200 dark:border-intel-800 flex items-center px-4 gap-4 shrink-0 z-10">
+                <header className="h-14 bg-white dark:bg-intel-900 border-b border-gray-200 dark:border-intel-800 flex items-center px-6 gap-4 shrink-0 z-10">
                     {/* Sidebar toggle */}
                     <button
                         onClick={() => setSidebarOpen(s => !s)}
-                        className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                        className="text-intel-400 hover:text-intel-900 transition-colors p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800"
                     >
                         {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
                     </button>
 
                     {/* Breadcrumb / page title */}
                     <div className="flex-1">
-                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        <p className="text-sm font-black text-intel-900 uppercase tracking-widest font-inter">
                             {NAV_SECTIONS.flatMap(s => s.items).find(i => isActive(i.path))?.label ?? 'Admin'}
                         </p>
                     </div>
 
                     {/* Right actions */}
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2">
                         {/* Dark mode */}
                         <button
                             onClick={toggle}
-                            className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            className="p-2 rounded-lg text-intel-400 hover:text-intel-900 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
                             title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
                         >
                             {isDark ? <Sun size={18} /> : <Moon size={18} />}
                         </button>
 
                         {/* Notifications stub */}
-                        <button className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative">
+                        <button className="p-2 rounded-lg text-intel-400 hover:text-intel-900 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors relative">
                             <Bell size={18} />
+                            <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-maroon-600 rounded-full"></span>
                         </button>
 
+                        <div className="w-px h-6 bg-gray-200 mx-2"></div>
+
                         {/* Profile dropdown */}
-                        <div className="relative ml-2">
+                        <div className="relative">
                             <button
                                 onClick={() => setProfileOpen(o => !o)}
-                                className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                className="flex items-center gap-2.5 px-2 py-1 rounded-lg hover:bg-gray-50 transition-colors"
                             >
-                                <div className="w-7 h-7 rounded-full bg-maroon-600 flex items-center justify-center text-white text-xs font-bold">
+                                <div className="w-7 h-7 rounded bg-intel-900 flex items-center justify-center text-white text-xs font-black shadow-sm">
                                     {admin.name.charAt(0)}
                                 </div>
-                                <span className="text-sm font-medium text-slate-700 dark:text-slate-200 hidden sm:block">{admin.name}</span>
-                                <ChevronDown size={14} className="text-slate-400" />
+                                <span className="text-sm font-bold text-intel-900 hidden sm:block">{admin.name}</span>
+                                <ChevronDown size={14} className="text-intel-300" />
                             </button>
 
                             {profileOpen && (
-                                <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl py-1 z-50 animate-scale-in">
-                                    <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-700">
-                                        <p className="text-xs font-bold text-slate-800 dark:text-white">{admin.name}</p>
-                                        <p className="text-xs text-slate-400">{admin.email}</p>
+                                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded shadow-xl py-1 z-50 animate-scale-in">
+                                    <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-700">
+                                        <p className="text-xs font-black text-intel-900 uppercase tracking-tighter">{admin.name}</p>
+                                        <p className="text-[10px] text-gray-400 font-mono mt-0.5">{admin.email}</p>
                                     </div>
                                     <button
                                         onClick={handleLogout}
-                                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors"
+                                        className="w-full text-left px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-maroon-600 hover:bg-maroon-50 flex items-center gap-2 transition-colors"
                                     >
                                         <LogOut size={14} /> Sign out
                                     </button>
@@ -221,7 +224,7 @@ export const AdminLayout: React.FC = () => {
                 </header>
 
                 {/* ── PAGE CONTENT ── */}
-                <main className="flex-1 overflow-auto p-6 bg-slate-100 dark:bg-slate-950">
+                <main className="flex-1 overflow-auto p-8 bg-gray-50 dark:bg-slate-950">
                     <Routes>
                         <Route path="dashboard" element={<AdminDashboard />} />
                         <Route path="list" element={<AdminList />} />
@@ -242,3 +245,4 @@ export const AdminLayout: React.FC = () => {
         </div>
     );
 };
+

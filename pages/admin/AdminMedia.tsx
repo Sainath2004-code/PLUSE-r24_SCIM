@@ -107,10 +107,10 @@ export const AdminMedia: React.FC = () => {
             {/* Header */}
             <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
-                    <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <FolderOpen size={20} className="text-brand-400" /> Media Library
+                    <h1 className="text-xl font-black text-intel-900 dark:text-white flex items-center gap-3 uppercase tracking-tight font-clarendon">
+                        <FolderOpen size={20} className="text-maroon-600" /> Intelligence Assets
                     </h1>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">{files.length} files</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">{files.length} Secure Media Records Indexed</p>
                 </div>
                 <div className="flex gap-2">
                     <input
@@ -123,21 +123,21 @@ export const AdminMedia: React.FC = () => {
                     <button
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploading}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+                        className="inline-flex items-center gap-2.5 px-6 py-2.5 bg-maroon-600 hover:bg-maroon-500 disabled:opacity-50 text-white text-[10px] font-black uppercase tracking-widest rounded transition-all shadow-lg shadow-maroon-900/20 active:scale-95"
                     >
-                        <Upload size={15} />
-                        {uploading ? 'Uploading...' : 'Upload Image'}
+                        <Upload size={14} />
+                        {uploading ? 'Transmitting...' : 'Upload Asset'}
                     </button>
                 </div>
             </div>
 
             {/* Search */}
-            <div className="relative w-60">
-                <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
+            <div className="relative w-72">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                     type="text"
-                    placeholder="Search files..."
-                    className="pl-8 pr-4 py-2 text-sm w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-brand-400 outline-none"
+                    placeholder="Identify specific assets…"
+                    className="pl-9 pr-4 py-2 text-xs font-bold w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded focus:ring-1 focus:ring-maroon-600 outline-none transition-all uppercase tracking-wider"
                     value={query}
                     onChange={e => setQuery(e.target.value)}
                 />
@@ -145,7 +145,7 @@ export const AdminMedia: React.FC = () => {
 
             {/* Drop zone */}
             <div
-                className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 text-center hover:border-brand-400 hover:bg-brand-50/50 dark:hover:border-brand-500 dark:hover:bg-brand-900/10 transition-colors cursor-pointer"
+                className="border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-xl p-10 text-center hover:border-maroon-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all cursor-pointer group"
                 onDragOver={e => e.preventDefault()}
                 onDrop={e => {
                     e.preventDefault();
@@ -154,9 +154,9 @@ export const AdminMedia: React.FC = () => {
                 }}
                 onClick={() => fileInputRef.current?.click()}
             >
-                <ImageIcon size={32} className="mx-auto text-slate-300 dark:text-slate-600 mb-2" />
-                <p className="text-sm text-slate-400 font-medium">Drop images here or click to upload</p>
-                <p className="text-xs text-slate-300 dark:text-slate-600 mt-1">PNG, JPG, GIF, WebP</p>
+                <ImageIcon size={32} className="mx-auto text-gray-300 dark:text-slate-600 mb-3 group-hover:text-maroon-600 transition-colors" />
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-intel-900">Initiate Asset Upload</p>
+                <p className="text-[9px] text-gray-400 font-mono tracking-normal mt-2 lowercase">Drag & drop visual data or click to select (max 2MB)</p>
             </div>
 
             {/* Grid */}
@@ -189,8 +189,8 @@ export const AdminMedia: React.FC = () => {
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                     <button
                                         onClick={() => copyUrl(file.url)}
-                                        className="p-1.5 bg-white rounded-lg text-slate-700 hover:bg-brand-50 transition-colors"
-                                        title="Copy URL"
+                                        className="p-1.5 bg-white rounded text-intel-900 hover:bg-maroon-50 transition-colors"
+                                        title="Copy Source URL"
                                     >
                                         <Copy size={14} />
                                     </button>
@@ -203,10 +203,10 @@ export const AdminMedia: React.FC = () => {
                                     </button>
                                 </div>
                             </div>
-                            <div className="p-2.5">
-                                <p className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate" title={file.name}>{file.name}</p>
+                            <div className="p-3">
+                                <p className="text-[10px] font-bold text-intel-900 dark:text-slate-300 truncate tracking-tight" title={file.name}>{file.name}</p>
                                 {file.size && (
-                                    <p className="text-[10px] text-slate-400 mt-0.5">{formatSize(file.size)}</p>
+                                    <p className="text-[9px] text-gray-400 font-mono mt-0.5">{formatSize(file.size)}</p>
                                 )}
                             </div>
                         </div>

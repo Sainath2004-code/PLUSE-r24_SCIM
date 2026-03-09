@@ -5,12 +5,13 @@ import {
     FileText, CheckSquare, Square, AlertCircle
 } from 'lucide-react';
 import { storageService } from '../../services/storageService';
-import { NewsItem } from '../../types';
+import { NewsItem, NewsStatus } from '../../types';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { SkeletonRow } from '../../components/ui/SkeletonCard';
 import { useToast } from '../../context/ToastContext';
+import { Card } from '../../components/ui/Card';
 
-type SortField = 'title' | 'status' | 'author' | 'createdAt';
+type SortField = 'title' | 'status' | 'author' | 'createdAt' | 'category';
 type SortDir = 'asc' | 'desc';
 
 const STATUS_STYLES: Record<string, string> = {
@@ -87,7 +88,7 @@ export const AdminList: React.FC = () => {
 
     const SortIcon = ({ field }: { field: SortField }) => {
         if (sortField !== field) return <ChevronDown size={13} className="text-slate-300" />;
-        return sortDir === 'asc' ? <ChevronUp size={13} className="text-brand-500" /> : <ChevronDown size={13} className="text-brand-500" />;
+        return sortDir === 'asc' ? <ChevronUp size={13} className="text-maroon-600" /> : <ChevronDown size={13} className="text-maroon-600" />;
     };
 
     const toggleSelect = (id: string) => {
@@ -148,77 +149,81 @@ export const AdminList: React.FC = () => {
             />
 
             {/* Header */}
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <h1 className="text-xl font-bold text-slate-900 dark:text-white">All Articles</h1>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">{items.length} total articles</p>
+            <div className="flex flex-wrap items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                    <div className="h-px w-8 bg-maroon-600"></div>
+                    <div>
+                        <h1 className="text-2xl font-black text-intel-900 dark:text-white uppercase tracking-tight font-clarendon">Archive Browser</h1>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">{items.length} Intelligence Briefs Indexed</p>
+                    </div>
                 </div>
                 <Link
                     to="/admin/create"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-lg transition-colors"
+                    className="inline-flex items-center gap-2.5 px-6 py-2.5 bg-maroon-600 hover:bg-maroon-500 text-white text-[10px] font-black uppercase tracking-widest rounded transition-all shadow-lg shadow-maroon-900/20 active:scale-95"
                 >
-                    <Plus size={16} /> Add Article
+                    <Plus size={14} /> New Brief
                 </Link>
             </div>
 
             {/* Toolbar */}
-            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 flex flex-wrap gap-2 items-center">
-                {/* Search */}
-                <div className="relative">
-                    <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
-                    <input
-                        type="text"
-                        placeholder="Search articles..."
-                        className="pl-8 pr-4 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-brand-400 outline-none w-52 transition"
-                        value={query}
-                        onChange={e => setQuery(e.target.value)}
-                    />
-                    {query && (
-                        <button onClick={() => setQuery('')} className="absolute right-2 top-2 text-slate-400 hover:text-slate-600">
-                            ✕
-                        </button>
+            <Card className="overflow-hidden border-t-2 border-t-intel-900 shadow-xl">
+                <div className="p-6 border-b border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 flex flex-wrap items-center justify-between gap-4">
+                    <div className="relative flex-1 max-w-sm">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Identify specific records…"
+                            className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded text-xs font-bold focus:ring-1 focus:ring-maroon-500 focus:border-maroon-500 outline-none transition-all"
+                            value={query} // Changed from 'search' to 'query'
+                            onChange={e => setQuery(e.target.value)} // Changed from 'setSearch' to 'setQuery'
+                        />
+                        {query && ( // Moved this block inside the search input's parent div
+                            <button onClick={() => setQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                ✕
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Status filter */}
+                    <select
+                        className="py-2 px-3 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-brand-400 outline-none"
+                        value={statusFilter}
+                        onChange={e => setStatusFilter(e.target.value)}
+                    >
+                        <option value="all">All Statuses</option>
+                        <option value="published">Published</option>
+                        <option value="draft">Draft</option>
+                        <option value="pending_approval">Pending</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+
+                    {/* Results count */}
+                    <p className="text-xs text-slate-400 ml-1">
+                        {filtered.length} result{filtered.length !== 1 ? 's' : ''}
+                    </p>
+
+                    {/* Bulk actions */}
+                    {selected.size > 0 && (
+                        <div className="ml-auto flex items-center gap-2">
+                            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{selected.size} selected</span>
+                            <button
+                                onClick={() => setBulkDeleteOpen(true)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-lg text-xs font-semibold transition-colors"
+                            >
+                                <Trash2 size={13} /> Delete Selected
+                            </button>
+                            <button onClick={() => setSelected(new Set())} className="text-xs text-slate-400 hover:text-slate-600 transition-colors px-2">
+                                Clear
+                            </button>
+                        </div>
                     )}
                 </div>
-
-                {/* Status filter */}
-                <select
-                    className="py-2 px-3 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-brand-400 outline-none"
-                    value={statusFilter}
-                    onChange={e => setStatusFilter(e.target.value)}
-                >
-                    <option value="all">All Statuses</option>
-                    <option value="published">Published</option>
-                    <option value="draft">Draft</option>
-                    <option value="pending_approval">Pending</option>
-                    <option value="rejected">Rejected</option>
-                </select>
-
-                {/* Results count */}
-                <p className="text-xs text-slate-400 ml-1">
-                    {filtered.length} result{filtered.length !== 1 ? 's' : ''}
-                </p>
-
-                {/* Bulk actions */}
-                {selected.size > 0 && (
-                    <div className="ml-auto flex items-center gap-2">
-                        <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{selected.size} selected</span>
-                        <button
-                            onClick={() => setBulkDeleteOpen(true)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-lg text-xs font-semibold transition-colors"
-                        >
-                            <Trash2 size={13} /> Delete Selected
-                        </button>
-                        <button onClick={() => setSelected(new Set())} className="text-xs text-slate-400 hover:text-slate-600 transition-colors px-2">
-                            Clear
-                        </button>
-                    </div>
-                )}
-            </div>
+            </Card>
 
             {/* Table */}
             <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
                 <table className="w-full text-left">
-                    <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
+                    <thead className="bg-intel-50 dark:bg-intel-900/50 border-b border-gray-200">
                         <tr>
                             <th className="px-4 py-3 w-10">
                                 <button onClick={toggleAll} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
@@ -228,27 +233,36 @@ export const AdminList: React.FC = () => {
                                 </button>
                             </th>
                             <th className="px-3 py-3 w-14 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Img</th>
-                            <th className="px-3 py-3">
-                                <button onClick={() => toggleSort('title')} className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
-                                    Title <SortIcon field="title" />
+                            <th className="px-6 py-4 text-left">
+                                <button
+                                    onClick={() => toggleSort('title')}
+                                    className="text-[10px] font-black uppercase tracking-[0.2em] text-intel-900 dark:text-slate-300 flex items-center gap-1.5"
+                                >
+                                    Intelligence Title {sortField === 'title' && (sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />)}
                                 </button>
                             </th>
-                            <th className="px-3 py-3">
-                                <button onClick={() => toggleSort('status')} className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
-                                    Status <SortIcon field="status" />
+                            <th className="px-6 py-4 text-left">
+                                <button
+                                    onClick={() => toggleSort('category')}
+                                    className="text-[10px] font-black uppercase tracking-[0.2em] text-intel-900 dark:text-slate-300 flex items-center gap-1.5"
+                                >
+                                    Strategic Category {sortField === 'category' && (sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />)}
                                 </button>
                             </th>
-                            <th className="px-3 py-3">
-                                <button onClick={() => toggleSort('author')} className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
-                                    Author <SortIcon field="author" />
+                            <th className="px-6 py-4 text-center">
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-intel-900 dark:text-slate-300">Status</p>
+                            </th>
+                            <th className="px-6 py-4 text-left">
+                                <button
+                                    onClick={() => toggleSort('createdAt')}
+                                    className="text-[10px] font-black uppercase tracking-[0.2em] text-intel-900 dark:text-slate-300 flex items-center gap-1.5"
+                                >
+                                    Logged At {sortField === 'createdAt' && (sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />)}
                                 </button>
                             </th>
-                            <th className="px-3 py-3">
-                                <button onClick={() => toggleSort('createdAt')} className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
-                                    Date <SortIcon field="createdAt" />
-                                </button>
+                            <th className="px-6 py-4 text-right">
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-intel-900 dark:text-slate-300">Commands</p>
                             </th>
-                            <th className="px-3 py-3 text-right text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -264,6 +278,7 @@ export const AdminList: React.FC = () => {
                             </tr>
                         ) : filtered.map(item => {
                             const title = item.blocks.find(b => b.type === 'title')?.value || 'Untitled';
+                            const category = item.blocks.find(b => b.type === 'category')?.value || 'General';
                             const img = item.blocks.find(b => b.type === 'image')?.value;
                             const isSelected = selected.has(item.id);
                             return (
@@ -285,22 +300,27 @@ export const AdminList: React.FC = () => {
                                             </div>
                                         )}
                                     </td>
-                                    <td className="px-3 py-3">
-                                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 line-clamp-1 max-w-xs">{title}</p>
-                                        {item.meta?.source === 'pdf_upload' && (
-                                            <span className="text-[10px] text-violet-500 font-mono">PDF import</span>
-                                        )}
+                                    <td className="px-6 py-4">
+                                        <p className="text-sm font-bold text-intel-900 dark:text-white line-clamp-1 font-clarendon">{title}</p>
+                                        <p className="text-[10px] text-gray-400 mt-0.5 font-mono">{item.author || 'PULSE-R24 System'}</p>
                                     </td>
-                                    <td className="px-3 py-3">
-                                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${STATUS_STYLES[item.status] ?? 'bg-slate-100 text-slate-600'}`}>
-                                            {STATUS_LABELS[item.status] ?? item.status}
+                                    <td className="px-6 py-4">
+                                        <span className="px-2 py-0.5 bg-intel-50 text-intel-900 border border-intel-100 rounded text-[9px] font-black uppercase tracking-widest">
+                                            {category}
                                         </span>
                                     </td>
-                                    <td className="px-3 py-3 text-sm text-slate-500 dark:text-slate-400">{item.author}</td>
-                                    <td className="px-3 py-3 text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                                        {new Date(item.createdAt).toLocaleDateString()}
+                                    <td className="px-6 py-4 text-center">
+                                        <StatusBadge status={item.status} />
                                     </td>
-                                    <td className="px-3 py-3">
+                                    <td className="px-6 py-4">
+                                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">
+                                            {new Date(item.createdAt).toLocaleDateString('en-GB')}
+                                        </p>
+                                        <p className="text-[9px] text-gray-300 font-mono">
+                                            {new Date(item.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                                        </p>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-1">
                                             <a
                                                 href={`#/news/${item.id}`}
@@ -311,19 +331,19 @@ export const AdminList: React.FC = () => {
                                             >
                                                 <Eye size={15} />
                                             </a>
-                                            <button
-                                                onClick={() => navigate(`/admin/edit/${item.id}`)}
-                                                className="p-1.5 rounded-lg text-slate-400 hover:text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors"
-                                                title="Edit"
+                                            <Link
+                                                to={`/admin/edit/${item.id}`}
+                                                className="p-2 text-intel-400 hover:text-maroon-600 hover:bg-maroon-50 rounded transition-all"
+                                                title="Edit Brief"
                                             >
-                                                <Edit3 size={15} />
-                                            </button>
+                                                <Edit3 size={16} />
+                                            </Link>
                                             <button
                                                 onClick={() => setDeleteTarget(item.id)}
-                                                className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                                title="Delete"
+                                                className="p-2 text-intel-400 hover:text-red-600 hover:bg-red-50 rounded transition-all"
+                                                title="Expunge Record"
                                             >
-                                                <Trash2 size={15} />
+                                                <Trash2 size={16} />
                                             </button>
                                         </div>
                                     </td>
@@ -334,5 +354,20 @@ export const AdminList: React.FC = () => {
                 </table>
             </div>
         </div>
+    );
+};
+
+const StatusBadge: React.FC<{ status: NewsStatus }> = ({ status }) => {
+    const config = {
+        published: { cls: "bg-maroon-50 text-maroon-700 border-maroon-100", label: "Disseminated" },
+        draft: { cls: "bg-gray-50 text-gray-600 border-gray-200", label: "Draft Protocol" },
+        pending_approval: { cls: "bg-intel-50 text-intel-700 border-intel-200", label: "Verification" },
+        rejected: { cls: "bg-red-50 text-red-700 border-red-100", label: "Archived/Void" }
+    }[status];
+
+    return (
+        <span className={`px-2 py-0.5 rounded border text-[9px] font-black uppercase tracking-[0.1em] ${config.cls}`}>
+            {config.label}
+        </span>
     );
 };

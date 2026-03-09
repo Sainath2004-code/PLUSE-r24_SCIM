@@ -18,8 +18,8 @@ const DropZone: React.FC<{ isDragging: boolean; onDragOver: React.DragEventHandl
 }) => (
     <div
         className={`overflow-hidden transition-all duration-200 border-2 border-dashed rounded-xl p-12 cursor-pointer ${isDragging
-            ? 'border-brand-400 bg-brand-50 scale-[1.01]'
-            : 'border-slate-300 hover:border-brand-300 hover:bg-slate-50 bg-white'
+            ? 'border-maroon-400 bg-maroon-50 scale-[1.01]'
+            : 'border-gray-200 hover:border-maroon-300 hover:bg-gray-50 bg-white dark:bg-slate-800'
             }`}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
@@ -216,15 +216,15 @@ export const AdminPdfUpload: React.FC = () => {
         <div className="max-w-4xl mx-auto pb-20">
             {/* Header */}
             <div className="flex items-center gap-4 mb-8">
-                <Link to="/admin/dashboard" className="p-2 hover:bg-slate-100 rounded-full text-slate-500">
+                <Link to="/admin/dashboard" className="p-2 hover:bg-gray-100 rounded-full text-gray-400">
                     <ChevronLeft size={20} />
                 </Link>
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        <FileUp size={22} className="text-brand-500" />
-                        PDF → News Generator
+                    <h1 className="text-2xl font-black text-intel-900 dark:text-white flex items-center gap-3 uppercase tracking-tight font-clarendon">
+                        <FileUp size={24} className="text-maroon-600" />
+                        Intelligence Generator
                     </h1>
-                    <p className="text-sm text-slate-500 mt-0.5">Upload a PDF bulletin and we'll automatically extract the content into a news article.</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">Convert PDF Intelligence Bulletins into Digital Records</p>
                 </div>
             </div>
 
@@ -244,18 +244,18 @@ export const AdminPdfUpload: React.FC = () => {
                         className="hidden"
                         onChange={handleFileChange}
                     />
-                    <div className="flex flex-col items-center gap-4 text-center pointer-events-none">
-                        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-brand-100 to-brand-200 flex items-center justify-center">
-                            <FileUp size={36} className="text-brand-600" />
+                    <div className="flex flex-col items-center gap-5 text-center pointer-events-none">
+                        <div className="w-20 h-20 rounded-2xl bg-intel-50 flex items-center justify-center border border-intel-100">
+                            <FileUp size={36} className="text-maroon-600" />
                         </div>
                         <div>
-                            <p className="text-lg font-semibold text-slate-700">Drop your PDF here</p>
-                            <p className="text-sm text-slate-400 mt-1">or <span className="text-brand-500 font-medium">click to browse</span></p>
+                            <p className="text-xs font-black uppercase tracking-[0.3em] text-intel-900">Transmit Intelligence File</p>
+                            <p className="text-[10px] text-gray-400 mt-2 font-mono uppercase tracking-widest">Drag & Drop PDF or <span className="text-maroon-600 font-bold decoration-dotted underline">Securely Browse</span></p>
                         </div>
-                        <div className="flex items-center gap-6 mt-2 text-xs text-slate-400">
-                            <span className="flex items-center gap-1.5"><FileText size={14} /> PDF files only</span>
-                            <span className="flex items-center gap-1.5"><Sparkles size={14} /> Auto-extract text</span>
-                            <span className="flex items-center gap-1.5"><CheckCircle size={14} /> Review before publish</span>
+                        <div className="flex items-center gap-6 mt-4 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                            <span className="flex items-center gap-1.5"><FileText size={14} /> PDF Protocol</span>
+                            <span className="flex items-center gap-1.5"><Sparkles size={14} /> Auto-Extraction</span>
+                            <span className="flex items-center gap-1.5"><CheckCircle size={14} /> Verification</span>
                         </div>
                     </div>
                 </DropZone>
@@ -263,21 +263,21 @@ export const AdminPdfUpload: React.FC = () => {
 
             {/* ── Stage: Extracting ── */}
             {stage === 'extracting' && (
-                <Card className="p-16 flex flex-col items-center gap-6">
+                <Card className="p-16 flex flex-col items-center gap-6 border-t-2 border-t-intel-900 shadow-xl">
                     <div className="relative">
-                        <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-brand-100 to-brand-200 flex items-center justify-center">
-                            <FileText size={40} className="text-brand-500" />
+                        <div className="w-24 h-24 rounded-2xl bg-intel-50 flex items-center justify-center border border-intel-100">
+                            <FileText size={40} className="text-maroon-600" />
                         </div>
-                        <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-white rounded-full border border-slate-100 flex items-center justify-center shadow">
-                            <Loader2 size={18} className="text-brand-500 animate-spin" />
+                        <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-white rounded-full border border-intel-100 flex items-center justify-center shadow-lg">
+                            <Loader2 size={18} className="text-maroon-600 animate-spin" />
                         </div>
                     </div>
                     <div className="text-center">
-                        <p className="font-semibold text-slate-800 text-lg">Processing: <span className="text-brand-600">{pdfFile?.name}</span></p>
-                        <p className="text-sm text-slate-400 mt-1 animate-pulse">{extractProgress}</p>
+                        <p className="text-xs font-black uppercase tracking-widest text-intel-900">Processing Stream: <span className="text-maroon-600">{pdfFile?.name}</span></p>
+                        <p className="text-[10px] text-gray-400 mt-2 font-mono uppercase tracking-widest animate-pulse">{extractProgress}</p>
                     </div>
-                    <div className="w-64 bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-brand-400 to-brand-600 rounded-full animate-[progress_2s_ease-in-out_infinite]" style={{ width: '70%' }} />
+                    <div className="w-64 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                        <div className="h-full bg-intel-900 rounded-full animate-[progress_2s_ease-in-out_infinite]" style={{ width: '70%' }} />
                     </div>
                 </Card>
             )}
@@ -287,9 +287,9 @@ export const AdminPdfUpload: React.FC = () => {
                 <div className="space-y-5">
                     {/* Source file badge */}
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-full font-medium">
+                        <div className="flex items-center gap-2 text-[10px] bg-maroon-50 text-maroon-700 border border-maroon-100 px-3 py-1.5 rounded font-black uppercase tracking-widest">
                             <Sparkles size={14} />
-                            Auto-extracted from: <span className="font-bold">{pdfFile?.name}</span>
+                            Verified Extraction: <span className="text-intel-900">{pdfFile?.name}</span>
                         </div>
                         <button
                             onClick={reset}
@@ -306,38 +306,38 @@ export const AdminPdfUpload: React.FC = () => {
                     </div>
 
                     {/* Title */}
-                    <Card className="p-5">
-                        <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
-                            <Type size={15} className="text-brand-400" /> Headline / Title
+                    <Card className="p-6 border-t-2 border-t-maroon-600 shadow-lg">
+                        <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-intel-900 mb-3">
+                            <Type size={14} className="text-maroon-600" /> Intelligence Headline
                         </label>
                         <input
                             type="text"
-                            className="w-full px-3 py-2.5 bg-white text-slate-900 text-lg font-semibold border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-400 outline-none transition"
+                            className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-900 text-intel-900 dark:text-white text-xl font-bold border border-gray-200 dark:border-slate-700 rounded-lg focus:ring-1 focus:ring-maroon-600 outline-none transition font-clarendon"
                             value={title}
                             onChange={e => setTitle(e.target.value)}
-                            placeholder="Article headline…"
+                            placeholder="Primary intelligence indicator…"
                         />
                     </Card>
 
                     {/* Excerpt */}
-                    <Card className="p-5">
-                        <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
-                            <AlignLeft size={15} className="text-brand-400" /> Excerpt / Summary
+                    <Card className="p-6">
+                        <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-intel-900 mb-3">
+                            <AlignLeft size={14} className="text-maroon-600" /> Executive Summary
                         </label>
                         <textarea
                             rows={3}
-                            className="w-full px-3 py-2.5 bg-white text-slate-900 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-400 outline-none resize-none transition text-sm"
+                            className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-900 text-intel-900 dark:text-white border border-gray-200 dark:border-slate-700 rounded-lg focus:ring-1 focus:ring-maroon-600 outline-none resize-none transition text-sm leading-relaxed"
                             value={excerpt}
                             onChange={e => setExcerpt(e.target.value)}
-                            placeholder="Short summary shown in news feed…"
+                            placeholder="High-level briefing snapshot…"
                         />
                     </Card>
 
                     {/* Cover Image */}
                     <Card className="p-5">
-                        <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-3">
-                            <Image size={15} className="text-brand-400" /> Cover Image
-                            <span className="ml-auto text-xs text-slate-400 font-normal">Optional</span>
+                        <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-intel-900 mb-3">
+                            <Image size={14} className="text-maroon-600" /> Visual Intelligence
+                            <span className="ml-auto text-[9px] text-gray-400 font-mono tracking-normal uppercase">Reference Only</span>
                         </label>
 
                         {/* Mode toggle */}
@@ -345,22 +345,22 @@ export const AdminPdfUpload: React.FC = () => {
                             <button
                                 type="button"
                                 onClick={() => setImageMode('url')}
-                                className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${imageMode === 'url'
-                                    ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-200'
-                                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                                className={`text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded transition-all ${imageMode === 'url'
+                                    ? 'bg-maroon-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                                     }`}
                             >
-                                Image URL
+                                Source URL
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setImageMode('upload')}
-                                className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${imageMode === 'upload'
-                                    ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-200'
-                                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                                className={`text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded transition-all ${imageMode === 'upload'
+                                    ? 'bg-maroon-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                                     }`}
                             >
-                                Upload File
+                                Media Upload
                             </button>
                         </div>
 
@@ -376,7 +376,7 @@ export const AdminPdfUpload: React.FC = () => {
                             </div>
                         ) : (
                             <div
-                                className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:bg-slate-50 transition-colors relative cursor-pointer group"
+                                className="border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-lg p-8 text-center hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors relative cursor-pointer group"
                                 onClick={() => imageUploadRef.current?.click()}
                             >
                                 <input
@@ -390,15 +390,15 @@ export const AdminPdfUpload: React.FC = () => {
                                     }}
                                 />
                                 {imageUploading ? (
-                                    <div className="flex flex-col items-center gap-2 text-brand-500">
+                                    <div className="flex flex-col items-center gap-2 text-maroon-600">
                                         <Loader2 size={24} className="animate-spin" />
-                                        <span className="text-xs">Uploading…</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Uploading…</span>
                                     </div>
                                 ) : (
-                                    <div className="flex flex-col items-center gap-2 text-slate-400 group-hover:text-brand-500 transition-colors">
+                                    <div className="flex flex-col items-center gap-3 text-gray-400 group-hover:text-maroon-600 transition-colors">
                                         <Upload size={24} />
-                                        <span className="text-xs font-medium">Click to upload image</span>
-                                        <span className="text-xs text-slate-300">PNG, JPG, GIF (max 2MB)</span>
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Initiate Secure Upload</span>
+                                        <span className="text-[9px] font-mono text-gray-300 tracking-normal lowercase">Encrypted transfer (max 2MB)</span>
                                     </div>
                                 )}
                             </div>
@@ -429,38 +429,37 @@ export const AdminPdfUpload: React.FC = () => {
                     </Card>
 
                     {/* Body */}
-                    <Card className="p-5">
-                        <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-3">
-                            <FileText size={15} className="text-brand-400" /> Body Content
-                            <span className="ml-auto text-xs text-slate-400 font-normal">Markdown supported</span>
+                    <Card className="p-6">
+                        <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-intel-900 mb-3">
+                            <FileText size={14} className="text-maroon-600" /> Detailed Report (MARC)
                         </label>
                         <MarkdownEditor value={body} onChange={setBody} />
                     </Card>
 
                     {/* Meta row */}
                     <div className="grid grid-cols-2 gap-4">
-                        <Card className="p-5">
-                            <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
-                                <Tag size={15} className="text-brand-400" /> Tags
+                        <Card className="p-6">
+                            <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-intel-900 mb-3">
+                                <Tag size={14} className="text-maroon-600" /> Strategic Indicators
                             </label>
                             <input
                                 type="text"
-                                className="w-full px-3 py-2 bg-white text-slate-900 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-400 outline-none text-sm transition"
+                                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded text-xs font-bold focus:ring-1 focus:ring-maroon-600 outline-none transition"
                                 value={tags}
                                 onChange={e => setTags(e.target.value)}
-                                placeholder="threat, malware, india (comma separated)"
+                                placeholder="threat, malware, india…"
                             />
                         </Card>
-                        <Card className="p-5">
-                            <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
+                        <Card className="p-6">
+                            <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-intel-900 mb-3">
                                 Category
                             </label>
                             <input
                                 type="text"
-                                className="w-full px-3 py-2 bg-white text-slate-900 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-400 outline-none text-sm transition"
+                                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded text-xs font-bold focus:ring-1 focus:ring-maroon-600 outline-none transition"
                                 value={category}
                                 onChange={e => setCategory(e.target.value)}
-                                placeholder="e.g. Intelligence, Malware, APT"
+                                placeholder="e.g. Intelligence, Malware…"
                             />
                         </Card>
                     </div>
@@ -474,22 +473,22 @@ export const AdminPdfUpload: React.FC = () => {
                     )}
 
                     {/* Actions */}
-                    <div className="flex flex-wrap gap-3 pt-2">
-                        <Button variant="ghost" onClick={() => handleSave('draft')} disabled={saving || !title.trim()}>
-                            {saving ? <><Loader2 size={14} className="animate-spin mr-1" /> Saving…</> : 'Save as Draft'}
+                    <div className="flex flex-wrap gap-3 pt-4">
+                        <Button variant="secondary" onClick={() => handleSave('draft')} disabled={saving || !title.trim()} className="!text-[10px] !font-black !px-6">
+                            {saving ? 'Saving…' : 'Save Protocol'}
                         </Button>
-                        <Button onClick={() => handleSave('pending_approval')} disabled={saving || !title.trim()}>
-                            {saving ? <><Loader2 size={14} className="animate-spin mr-1" /> Submitting…</> : 'Submit for Approval →'}
+                        <Button onClick={() => handleSave('pending_approval')} disabled={saving || !title.trim()} className="!bg-intel-900 !text-[10px] !font-black !px-6">
+                            {saving ? 'Submitting…' : 'Submit for Verification'}
                         </Button>
-                        <button
+                        <Button
                             onClick={() => handleSave('published')}
                             disabled={saving || !title.trim()}
-                            className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors disabled:opacity-50 shadow-sm"
+                            className="!bg-maroon-600 hover:!bg-maroon-500 !text-[10px] !font-black !px-8 shadow-lg shadow-maroon-900/20"
                         >
                             {saving
-                                ? <><Loader2 size={14} className="animate-spin" /> Publishing…</>
-                                : <><CheckCircle size={15} /> Publish Now — Go Live</>}
-                        </button>
+                                ? 'Disseminating…'
+                                : <><CheckCircle size={14} className="mr-2" /> Disseminate Intelligence</>}
+                        </Button>
                     </div>
                 </div>
             )}

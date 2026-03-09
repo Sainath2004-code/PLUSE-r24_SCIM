@@ -10,9 +10,9 @@ import { FileUp, Eye, TrendingUp, FileText, Clock, CheckCircle } from 'lucide-re
 import { SkeletonStatCard } from '../../components/ui/SkeletonCard';
 
 const STATUS_COLORS: Record<string, string> = {
-    published: '#10b981',
-    draft: '#94a3b8',
-    pending_approval: '#f59e0b',
+    published: '#8b0000', // Maroon
+    draft: '#001428', // Navy 900
+    pending_approval: '#004d99', // Intel 500
     rejected: '#ef4444',
 };
 
@@ -28,12 +28,12 @@ function StatCard({ label, value, color, icon: Icon, loading }: {
 }) {
     if (loading) return <SkeletonStatCard />;
     return (
-        <div className={`bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 border-l-4 ${color}`}>
-            <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{label}</p>
-                <Icon size={16} className="text-slate-400" />
+        <div className={`bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded p-6 shadow-sm border-l-4 ${color}`}>
+            <div className="flex items-center justify-between mb-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-gray-400 dark:text-slate-400">{label}</p>
+                <Icon size={14} className="text-gray-300" />
             </div>
-            <p className="text-3xl font-bold text-slate-900 dark:text-white">{value}</p>
+            <p className="text-3xl font-black text-intel-900 dark:text-white font-clarendon">{value}</p>
         </div>
     );
 }
@@ -58,10 +58,10 @@ export const AdminDashboard: React.FC = () => {
     };
 
     const chartData = [
-        { name: 'Published', value: stats.published, fill: '#10b981' },
-        { name: 'Draft', value: stats.draft, fill: '#94a3b8' },
-        { name: 'Pending', value: stats.pending, fill: '#f59e0b' },
-        { name: 'PDF Import', value: stats.pdfImports, fill: '#8b5cf6' },
+        { name: 'Published', value: stats.published, fill: '#8b0000' },
+        { name: 'Draft', value: stats.draft, fill: '#001428' },
+        { name: 'Pending', value: stats.pending, fill: '#004d99' },
+        { name: 'PDF Import', value: stats.pdfImports, fill: '#002d5c' },
     ];
 
     const topArticle = items
@@ -73,42 +73,45 @@ export const AdminDashboard: React.FC = () => {
         .slice(0, 8);
 
     return (
-        <div className="space-y-6 max-w-7xl">
+        <div className="space-y-8 max-w-7xl">
 
             {/* Header */}
-            <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Dashboard</h1>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Overview of your newsroom CMS</p>
+            <div className="flex items-center gap-4">
+                <div className="h-px w-8 bg-maroon-600"></div>
+                <div>
+                    <h1 className="text-2xl font-black text-intel-900 uppercase tracking-tight font-clarendon">Dashboard</h1>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">Intelligence Ecosystem Overview</p>
+                </div>
             </div>
 
             {/* Stat cards */}
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-                <StatCard label="Total" value={stats.total} color="border-l-brand-500" icon={FileText} loading={loading} />
-                <StatCard label="Published" value={stats.published} color="border-l-emerald-500" icon={CheckCircle} loading={loading} />
-                <StatCard label="Draft" value={stats.draft} color="border-l-slate-400" icon={Clock} loading={loading} />
-                <StatCard label="Pending" value={stats.pending} color="border-l-amber-400" icon={Eye} loading={loading} />
-                <StatCard label="PDF Imports" value={stats.pdfImports} color="border-l-violet-400" icon={FileUp} loading={loading} />
+                <StatCard label="Total Briefs" value={stats.total} color="border-l-maroon-600" icon={FileText} loading={loading} />
+                <StatCard label="Published" value={stats.published} color="border-l-intel-900" icon={CheckCircle} loading={loading} />
+                <StatCard label="Drafts" value={stats.draft} color="border-l-gray-300" icon={Clock} loading={loading} />
+                <StatCard label="Pending" value={stats.pending} color="border-l-intel-500" icon={Eye} loading={loading} />
+                <StatCard label="PDF Imports" value={stats.pdfImports} color="border-l-maroon-300" icon={FileUp} loading={loading} />
             </div>
 
             {/* Charts + Top article */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                 {/* Bar chart */}
-                <div className="lg:col-span-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
-                    <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-4 flex items-center gap-2">
-                        <TrendingUp size={15} className="text-brand-400" /> Content Status Distribution
+                <div className="lg:col-span-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded p-6 shadow-sm">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-intel-900 dark:text-slate-200 mb-6 flex items-center gap-2">
+                        <TrendingUp size={14} className="text-maroon-600" /> Distribution of Intelligence
                     </h3>
-                    <div className="h-52">
+                    <div className="h-60">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={chartData} barSize={40}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+                            <BarChart data={chartData} barSize={32}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#9ca3af' }} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#9ca3af' }} />
                                 <RechartsTooltip
-                                    cursor={{ fill: '#f8fafc' }}
-                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.1)', fontSize: 12 }}
+                                    cursor={{ fill: '#f9fafb' }}
+                                    contentStyle={{ borderRadius: '4px', border: '1px solid #e5e7eb', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: 11, fontWeight: 600 }}
                                 />
-                                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                                <Bar dataKey="value" radius={[2, 2, 0, 0]}>
                                     {chartData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
                                 </Bar>
                             </BarChart>

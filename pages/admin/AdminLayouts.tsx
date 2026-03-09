@@ -67,11 +67,11 @@ export const AdminLayouts: React.FC = () => {
 
     return (
         <div className="h-[calc(100vh-6rem)] flex flex-col">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-slate-900">Layout Builder</h1>
+            <div className="flex justify-between items-center mb-8">
+                <h1 className="text-2xl font-black text-intel-900 uppercase tracking-tight font-clarendon">Protocol Architect</h1>
                 {!editing && (
-                    <Button onClick={() => setEditing({ templateId: `tpl-${Date.now()}`, name: 'New Layout', gridColumns: 12, blocks: [] })}>
-                        <Plus size={18} /> Create Template
+                    <Button onClick={() => setEditing({ templateId: `tpl-${Date.now()}`, name: 'New Layout', gridColumns: 12, blocks: [] })} className="!bg-maroon-600 hover:!bg-maroon-500 !text-[10px] !font-black !px-6 !uppercase !tracking-widest">
+                        <Plus size={16} /> New Protocol
                     </Button>
                 )}
             </div>
@@ -82,7 +82,7 @@ export const AdminLayouts: React.FC = () => {
                         <div className="p-4 border-b border-slate-200 bg-slate-50">
                             <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Template Name</label>
                             <input
-                                className="w-full px-3 py-2 bg-white text-slate-900 border border-slate-300 rounded focus:ring-2 focus:ring-brand-500 outline-none"
+                                className="w-full px-3 py-2 bg-white text-intel-900 border border-gray-200 rounded focus:ring-1 focus:ring-maroon-600 outline-none text-xs font-bold"
                                 value={editing.name}
                                 onChange={e => setEditing({ ...editing, name: e.target.value })}
                             />
@@ -90,18 +90,19 @@ export const AdminLayouts: React.FC = () => {
                         <div className="flex-1 overflow-y-auto p-4 space-y-2">
                             <p className="text-xs font-bold text-slate-400 uppercase mb-2">Add Blocks</p>
                             {['title', 'excerpt', 'markdown', 'image', 'tags', 'publishDate', 'author', 'divider'].map(type => (
-                                <button
-                                    key={type}
-                                    onClick={() => addBlock(type as any)}
-                                    className="w-full flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded hover:bg-slate-50 hover:border-brand-300 transition-all text-sm font-medium text-slate-700 text-left capitalize"
-                                >
-                                    <Plus size={14} className="text-brand-500" /> {type}
-                                </button>
+                                    <button
+                                        key={type}
+                                        onClick={() => addBlock(type as any)}
+                                        className="w-full flex items-center justify-between px-3 py-2 bg-white border border-gray-100 rounded hover:border-maroon-300 hover:bg-maroon-50 transition-all text-[10px] font-black uppercase tracking-widest text-intel-900 text-left"
+                                    >
+                                        <span>{type}</span>
+                                        <Plus size={12} className="text-maroon-600" />
+                                    </button>
                             ))}
                         </div>
-                        <div className="p-4 border-t border-slate-200 bg-slate-50 flex gap-2">
-                            <Button className="flex-1" onClick={handleSave}><Save size={16} /> Save</Button>
-                            <Button variant="ghost" onClick={() => setEditing(null)}>Cancel</Button>
+                        <div className="p-4 border-t border-gray-100 bg-gray-50 flex flex-col gap-2">
+                            <Button className="w-full !bg-intel-900 !text-[10px] !font-black !uppercase !tracking-widest" onClick={handleSave}><Save size={14} /> Commit Changes</Button>
+                            <Button variant="ghost" className="w-full !text-[10px] !font-black !uppercase !tracking-widest" onClick={() => setEditing(null)}>Abort</Button>
                         </div>
                     </Card>
 
@@ -139,7 +140,7 @@ export const AdminLayouts: React.FC = () => {
                                             type="range" min="1" max="12"
                                             value={block.grid?.colSpan || 12}
                                             onChange={(e) => updateBlock(block.id, { grid: { ...block.grid!, colSpan: parseInt(e.target.value) } })}
-                                            className="w-24 accent-brand-600"
+                                            className="w-24 accent-maroon-600"
                                         />
                                     </div>
                                 </div>
@@ -150,19 +151,19 @@ export const AdminLayouts: React.FC = () => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {templates.map(tpl => (
-                        <Card key={tpl.templateId} className="p-6 hover:border-brand-300 transition-colors cursor-pointer group">
+                        <Card key={tpl.templateId} className="p-6 hover:border-maroon-600 hover:shadow-xl transition-all cursor-pointer group border-t-2 border-t-intel-900">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <h3 className="font-bold text-lg text-slate-900">{tpl.name}</h3>
-                                    <p className="text-slate-500 text-sm mt-1">{tpl.blocks.length} blocks configured</p>
+                                    <h3 className="font-black text-sm text-intel-900 uppercase tracking-tight">{tpl.name}</h3>
+                                    <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-1">{tpl.blocks.length} Configured Components</p>
                                 </div>
                                 <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                                    <button onClick={() => setEditing(tpl)} className="p-2 bg-brand-50 text-brand-600 rounded-lg hover:bg-brand-100"><Edit3 size={18} /></button>
+                                    <button onClick={() => setEditing(tpl)} className="p-2 bg-intel-50 text-intel-900 rounded border border-intel-100 hover:bg-intel-100"><Edit3 size={16} /></button>
                                 </div>
                             </div>
-                            <div className="mt-4 h-24 bg-slate-50 rounded border border-slate-100 p-2 grid grid-cols-12 gap-1 overflow-hidden">
+                            <div className="mt-6 h-24 bg-gray-50 rounded border border-gray-100 p-3 grid grid-cols-12 gap-1.5 overflow-hidden">
                                 {tpl.blocks.slice(0, 8).map(b => (
-                                    <div key={b.id} className={`bg-slate-200 rounded-sm h-4 col-span-${Math.max(1, Math.round((b.grid?.colSpan || 12) / 2))}`} />
+                                    <div key={b.id} className={`bg-intel-100 rounded h-3 col-span-${Math.max(1, Math.round((b.grid?.colSpan || 12) / 2))}`} />
                                 ))}
                             </div>
                         </Card>
