@@ -10,6 +10,7 @@ const MODEL = 'llama-3.3-70b-versatile';
 function getKey(): string {
     const key = import.meta.env.VITE_GROQ_API_KEY;
     if (!key || key === 'your_groq_api_key_here') {
+        console.error('CRITICAL: VITE_GROQ_API_KEY is missing!');
         throw new Error('GROQ_API_KEY_MISSING');
     }
     return key;
