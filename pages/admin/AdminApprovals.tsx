@@ -26,6 +26,7 @@ export const AdminApprovals: React.FC = () => {
             ...item,
             status: newStatus,
             publishedAt: approved ? new Date().toISOString() : null,
+            updatedAt: new Date().toISOString(),
             rejectionReason: approved ? null : 'Rejected by admin',
             approvedBy: approved ? 'Admin' : null
         };
@@ -82,6 +83,14 @@ export const AdminApprovals: React.FC = () => {
                                 </div>
 
                                 <div className="flex items-center gap-2 shrink-0">
+                                    <Link to={`/admin/edit/${item.id}`}>
+                                        <Button
+                                            variant="secondary"
+                                            className="!text-slate-600 !border-slate-100 hover:!bg-slate-50 !text-[10px] !font-black !px-4"
+                                        >
+                                            Edit Protocol
+                                        </Button>
+                                    </Link>
                                     <Button
                                         variant="secondary"
                                         onClick={() => handleAction(item, 'rejected')}

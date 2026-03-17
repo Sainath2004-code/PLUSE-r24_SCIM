@@ -11,30 +11,38 @@ export default {
     theme: {
         extend: {
             colors: {
-                // Intelligence Navy palette
+                // Intelligence Navy palette (Refined for Enterprise Professional look)
                 intel: {
-                    950: '#000d1a',
-                    900: '#001428',
-                    800: '#001f3f',
-                    700: '#002d5c',
-                    600: '#003c7a',
-                    500: '#004d99',
-                    400: '#2170c4',
-                    300: '#5b9bd5',
-                    200: '#9fc3e8',
-                    100: '#d4e8f7',
+                    950: '#020617', // Deep Sea Slate
+                    900: '#0f172a', // Navy Night
+                    800: '#1e293b', 
+                    700: '#334155',
+                    600: '#475569',
+                    500: '#64748b',
+                    400: '#94a3b8',
+                    300: '#cbd5e1',
+                    200: '#e2e8f0',
+                    100: '#f1f5f9',
                 },
-                // Maroon accent (matches PDF brand color)
+                // Maroon accent (Premium shade)
                 maroon: {
-                    900: '#4a0000',
-                    800: '#6b0000',
-                    700: '#7d0000',
+                    950: '#2d0000',
+                    900: '#450000',
+                    800: '#600000',
+                    700: '#7a0000',
                     600: '#8b0000',
-                    500: '#a10000',
-                    400: '#c41e1e',
+                    500: '#a30000',
+                    400: '#c51e1e',
                     300: '#e05252',
                     200: '#f5aaaa',
                     100: '#fde8e8',
+                },
+                // Enterprise Slate Override (for high-density UI)
+                slate: {
+                    950: '#020617',
+                    900: '#0f172a',
+                    850: '#111827', // Mid-tone for depth
+                    800: '#1e293b',
                 },
                 // Keep brand for admin panel
                 brand: {
@@ -51,11 +59,24 @@ export default {
                     950: '#1e1b4b',
                 }
             },
+            boxShadow: {
+                'premium': '0 0 0 1px rgba(255, 255, 255, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                'glass': 'inset 0 1px 1px 0 rgba(255, 255, 255, 0.05)',
+            },
             fontFamily: {
                 cinzel: ['"Cinzel Decorative"', 'Cinzel', 'Georgia', 'serif'],
                 playfair: ['"Playfair Display"', 'Georgia', 'serif'],
                 inter: ['Inter', 'system-ui', 'sans-serif'],
                 clarendon: ['"Besley"', 'Clarendon', 'Rockwell', '"Zilla Slab"', 'serif'],
+            },
+            animation: {
+                'marquee': 'marquee 40s linear infinite',
+            },
+            keyframes: {
+                marquee: {
+                    '0%': { transform: 'translateX(0)' },
+                    '100%': { transform: 'translateX(-50%)' }, // Half because of duplicated content
+                }
             }
         }
     },

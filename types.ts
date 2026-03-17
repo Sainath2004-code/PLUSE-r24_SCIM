@@ -1,5 +1,9 @@
+export type SeverityLevel = 'critical' | 'high' | 'medium' | 'low' | 'info';
+
 export type BlockType = 'title' | 'slug' | 'excerpt' | 'markdown' | 'image' | 'gallery' | 'author' | 'tags' | 'publishDate' | 'category' | 'meta' | 'embed' | 'divider' | 'html';
-export type NewsStatus = 'draft' | 'pending_approval' | 'published' | 'rejected';
+
+
+export type NewsStatus = 'draft' | 'pending_approval' | 'published' | 'rejected' | 'archived';
 
 export interface LayoutBlock {
   id: string;
@@ -32,6 +36,8 @@ export interface NewsItem {
   blocks: NewsBlockValue[];
   author?: string;
   tags?: string[];
+  category?: string;
+  severity?: SeverityLevel;
   createdAt: string;
   updatedAt?: string;
   publishedAt?: string | null;

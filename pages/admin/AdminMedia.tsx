@@ -50,8 +50,17 @@ export const AdminMedia: React.FC = () => {
     useEffect(() => { loadFiles(); }, [loadFiles]);
 
     const handleUpload = async (file: File) => {
-        setUploading(true);
         try {
+            const maxBytes = 2 * 1024 * 1024;
+            if (!file.type.startsWith('image/')) {
+                addToast('Only image files are allowed.', 'error');
+                return;
+            }
+            if (file.size > maxBytes) {
+                addToast('Image is too large (max 2MB).', 'error');
+                return;
+            }
+            setUploading(true);
             const url = await storageService.uploadImage(file);
             if (url) {
                 addToast('Image uploaded!', 'success');

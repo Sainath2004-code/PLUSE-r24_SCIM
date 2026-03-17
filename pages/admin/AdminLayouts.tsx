@@ -116,7 +116,8 @@ export const AdminLayouts: React.FC = () => {
                             {editing.blocks.map((block, idx) => (
                                 <div
                                     key={block.id}
-                                    className={`relative group bg-slate-50 border border-slate-200 rounded-md p-4 col-span-${block.grid?.colSpan || 12} hover:border-brand-400 hover:shadow-md transition-all`}
+                                    style={{ gridColumn: `span ${block.grid?.colSpan || 12} / span ${block.grid?.colSpan || 12}` }}
+                                    className="relative group bg-slate-50 border border-slate-200 rounded-md p-4 hover:border-brand-400 hover:shadow-md transition-all"
                                 >
                                     <div className="flex justify-between items-start mb-2">
                                         <div className="flex items-center gap-2">
@@ -163,7 +164,11 @@ export const AdminLayouts: React.FC = () => {
                             </div>
                             <div className="mt-6 h-24 bg-gray-50 rounded border border-gray-100 p-3 grid grid-cols-12 gap-1.5 overflow-hidden">
                                 {tpl.blocks.slice(0, 8).map(b => (
-                                    <div key={b.id} className={`bg-intel-100 rounded h-3 col-span-${Math.max(1, Math.round((b.grid?.colSpan || 12) / 2))}`} />
+                                    <div
+                                        key={b.id}
+                                        style={{ gridColumn: `span ${Math.max(1, Math.round((b.grid?.colSpan || 12) / 2))} / span ${Math.max(1, Math.round((b.grid?.colSpan || 12) / 2))}` }}
+                                        className="bg-intel-100 rounded h-3"
+                                    />
                                 ))}
                             </div>
                         </Card>

@@ -57,3 +57,68 @@
         animation: shimmer 1.5s infinite;
     }
 }
+
+/* ─── Premium Glass Utility ───────────────────────────────────────────── */
+/* Light mode: white card with visible border & shadow                      */
+/* Dark mode:  dark translucent panel with white/5 border                   */
+.glass {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(226, 232, 240, 0.8);   /* slate-200/80             */
+    box-shadow: 0 4px 24px 0 rgba(15, 23, 42, 0.08);
+}
+
+.dark .glass {
+    background: rgba(15, 23, 42, 0.6);            /* slate-950/60             */
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 4px 32px 0 rgba(0, 0, 0, 0.5);
+}
+
+.glass-dark {
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 8px 40px 0 rgba(0, 0, 0, 0.6);
+}
+
+/* ─── Admin form inputs: clear in BOTH modes ──────────────────────────── */
+.admin-input {
+    @apply w-full
+           bg-white dark:bg-slate-800
+           text-slate-900 dark:text-white
+           border border-slate-300 dark:border-slate-600
+           rounded-xl px-4 py-3
+           text-sm font-semibold
+           placeholder:text-slate-400 dark:placeholder:text-slate-500
+           focus:ring-2 focus:ring-maroon-500/40 focus:border-maroon-500
+           outline-none transition-all;
+}
+
+.admin-input-lg {
+    @apply admin-input text-2xl font-black px-6 py-5 rounded-2xl tracking-tight;
+}
+
+/* ─── Admin labels: readable in BOTH modes ────────────────────────────── */
+.admin-label {
+    @apply text-[10px] font-black uppercase tracking-[0.25em]
+           text-slate-700 dark:text-slate-300;
+}
+
+/* ─── Premium Scrollbar ───────────────────────────────────────────────── */
+.premium-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+.premium-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.premium-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 dark:bg-slate-600 rounded-full;
+}
+.premium-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400 dark:bg-slate-500;
+}
+
+/* ─── Global base ─────────────────────────────────────────────────────── */
+@layer base {
+    body {
+        @apply antialiased text-slate-900 dark:text-slate-100;
+    }
+}

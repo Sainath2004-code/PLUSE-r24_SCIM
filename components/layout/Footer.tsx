@@ -1,8 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Globe, Linkedin, Twitter } from 'lucide-react';
 
 export const Footer: React.FC = () => {
     const today = new Date();
+    const [email, setEmail] = useState('');
+    const [message, setMessage] = useState<string | null>(null);
+    const [isError, setIsError] = useState(false);
+
+    const handleSubscribe = (e: React.FormEvent) => {
+        e.preventDefault();
+        const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+        if (!valid) {
+            setIsError(true);
+            setMessage('Please enter a valid email address.');
+            return;
+        }
+        setIsError(false);
+        setMessage('Subscription request received.');
+        setEmail('');
+    };
 
     return (
         <footer style={{ backgroundColor: '#0D1542' }} className="border-t border-white/10 mt-20 pt-16 pb-8 font-inter">
@@ -18,16 +34,26 @@ export const Footer: React.FC = () => {
 
                         <div className="mt-6">
                             <p className="font-medium text-white/80 mb-3 text-sm">Subscribe to Intelligence Briefs</p>
-                            <div className="flex items-end max-w-sm">
+                            <form onSubmit={handleSubscribe} className="flex items-end max-w-sm">
                                 <input
                                     type="email"
                                     placeholder="Enter your email"
                                     className="bg-transparent border-0 border-b border-white/30 rounded-none px-0 py-2 w-full text-sm text-white placeholder-white/40 focus:ring-0 focus:border-red-400 transition-colors outline-none"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                 />
-                                <button className="ml-4 px-4 py-2 border border-red-400 text-red-400 hover:bg-red-400 hover:text-white text-xs font-semibold uppercase tracking-wider transition-colors whitespace-nowrap">
+                                <button
+                                    type="submit"
+                                    className="ml-4 px-4 py-2 border border-red-400 text-red-400 hover:bg-red-400 hover:text-white text-xs font-semibold uppercase tracking-wider transition-colors whitespace-nowrap"
+                                >
                                     Subscribe
                                 </button>
-                            </div>
+                            </form>
+                            {message && (
+                                <p className={`mt-3 text-xs ${isError ? 'text-red-300' : 'text-emerald-300'}`}>
+                                    {message}
+                                </p>
+                            )}
                         </div>
                     </div>
 
@@ -39,7 +65,7 @@ export const Footer: React.FC = () => {
                         </div>
                         <ul className="space-y-4">
                             <li>
-                                <span className="block text-sm font-medium text-white/90">PGDSCIM (2025–26)</span>
+                                <span className="block text-sm font-medium text-white/90">PGDSCIM (2025-26)</span>
                                 <span className="block text-xs text-white/50 mt-1">Rashtriya Raksha University, Puducherry</span>
                             </li>
                             <li className="pt-2">
@@ -57,14 +83,14 @@ export const Footer: React.FC = () => {
                             <h3 className="font-semibold text-white/50 tracking-wide uppercase text-xs">Connect</h3>
                         </div>
                         <ul className="space-y-3 mb-8">
-                            <li><a href="#" className="text-sm text-white/60 hover:text-red-400 transition-colors">Contact Editorial</a></li>
-                            <li><a href="#" className="text-sm text-white/60 hover:text-red-400 transition-colors">Submission Guidelines</a></li>
-                            <li><a href="#" className="text-sm text-white/60 hover:text-red-400 transition-colors">Admin Portal</a></li>
+                            <li><a href="mailto:editorial@pulser24.in" className="text-sm text-white/60 hover:text-red-400 transition-colors">Contact Editorial</a></li>
+                            <li><a href="mailto:editorial@pulser24.in?subject=Submission%20Guidelines" className="text-sm text-white/60 hover:text-red-400 transition-colors">Submission Guidelines</a></li>
+                            <li><a href="#/admin" className="text-sm text-white/60 hover:text-red-400 transition-colors">Admin Portal</a></li>
                         </ul>
                         <div className="flex gap-3">
-                            <a href="#" className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center text-white/50 hover:text-red-400 hover:border-red-400 transition-all"><Globe size={14} /></a>
-                            <a href="#" className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center text-white/50 hover:text-red-400 hover:border-red-400 transition-all"><Linkedin size={14} /></a>
-                            <a href="#" className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center text-white/50 hover:text-red-400 hover:border-red-400 transition-all"><Twitter size={14} /></a>
+                            <a href="https://rru.ac.in" target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center text-white/50 hover:text-red-400 hover:border-red-400 transition-all"><Globe size={14} /></a>
+                            <a href="https://www.linkedin.com" target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center text-white/50 hover:text-red-400 hover:border-red-400 transition-all"><Linkedin size={14} /></a>
+                            <a href="https://twitter.com" target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center text-white/50 hover:text-red-400 hover:border-red-400 transition-all"><Twitter size={14} /></a>
                         </div>
                     </div>
                 </div>
@@ -72,13 +98,13 @@ export const Footer: React.FC = () => {
                 {/* Bottom Bar */}
                 <div className="border-t border-white/10 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
                     <p className="text-xs text-white/40 text-center md:text-left">
-                        © {today.getFullYear()} PULSE-R24 Intelligence Network. All rights reserved. <br className="md:hidden" />
+                        (c) {today.getFullYear()} PULSE-R24 Intelligence Network. All rights reserved. <br className="md:hidden" />
                         For informational and awareness purposes only.
                     </p>
                     <div className="flex gap-4 text-xs text-white/40">
-                        <a href="#" className="hover:text-white/80 transition-colors">Privacy Policy</a>
+                        <a href="#/privacy" className="hover:text-white/80 transition-colors">Privacy Policy</a>
                         <span>|</span>
-                        <a href="#" className="hover:text-white/80 transition-colors">Terms of Use</a>
+                        <a href="#/terms" className="hover:text-white/80 transition-colors">Terms of Use</a>
                     </div>
                 </div>
             </div>

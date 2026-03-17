@@ -7,11 +7,8 @@ export const BlockRenderer: React.FC<{ block: LayoutBlock; value: any }> = ({ bl
 
     switch (block.type) {
         case 'title':
-            // Title is already shown in the page header in PublicDetail — skip re-rendering
-            return null;
-
         case 'excerpt':
-            // Excerpt is shown in header area — skip duplicate render in body
+            // These are handled specifically in the layout (PublicDetail) — skip re-rendering in the body
             return null;
 
         case 'markdown':

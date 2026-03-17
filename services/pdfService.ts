@@ -215,35 +215,67 @@ function isBoldOrLarge(line: DocLine, median: number): boolean {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STEP 5 — Render first PDF page to JPEG blob (for cover image)
+// STEP 5 — Extract the best image object from the PDF
+// Looks for the largest embedded image (XObject) on the first 2 pages.
+// Falls back to a page 1 render if no high-quality objects are found.
 // ─────────────────────────────────────────────────────────────────────────────
-export async function renderFirstPageToBlob(file: File): Promise<Blob | null> {
+export async function extractBestImageFromPdf(file: File): Promise<Blob | null> {
     try {
         const buf = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+        
+        // Scan first 2 pages for image objects
+        const maxPagesToScan = Math.min(2, pdf.numPages);
+        let bestImage: { blob: Blob; area: number } | null = null;
+
+        for (let n = 1; n <= maxPagesToScan; n++) {
+            const page = await pdf.getPage(n);
+            const ops = await page.getOperatorList();
+            const commonObjs = page.commonObjs;
+
+            for (let i = 0; i < ops.fnArray.length; i++) {
+                if (ops.fnArray[i] === pdfjsLib.OPS.paintImageXObject) {
+                    const objId = ops.argsArray[i][0];
+                    const img = commonObjs.get(objId);
+                    
+                    if (img && img.width && img.height) {
+                        const area = img.width * img.height;
+                        if (area > 20000 && (!bestImage || area > bestImage.area)) {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            const ctx = canvas.getContext('2d');
+                            if (ctx) {
+                                const imageData = ctx.createImageData(img.width, img.height);
+                                imageData.data.set(img.data);
+                                ctx.putImageData(imageData, 0, 0);
+                                const blob = await new Promise<Blob | null>(res => canvas.toBlob(res, 'image/jpeg', 0.9));
+                                if (blob) bestImage = { blob, area };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (bestImage) return bestImage.blob;
+
+        // Fallback: Render first page at high scale
         const page = await pdf.getPage(1);
-
-        // Render at 2× for quality
-        const SCALE = 2;
+        const SCALE = 2.5;
         const vp = page.getViewport({ scale: SCALE });
-
         const canvas = document.createElement('canvas');
         canvas.width = vp.width;
         canvas.height = vp.height;
         const ctx = canvas.getContext('2d');
         if (!ctx) return null;
-
-        // White background
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
         await page.render({ canvas, canvasContext: ctx, viewport: vp } as any).promise;
+        return await new Promise<Blob | null>(res => canvas.toBlob(res, 'image/jpeg', 0.85));
 
-        return await new Promise<Blob | null>(resolve =>
-            canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.88)
-        );
     } catch (err) {
-        console.warn('[pdfService] renderFirstPageToBlob failed:', err);
+        console.warn('[pdfService] Image extraction failed:', err);
         return null;
     }
 }
@@ -267,67 +299,54 @@ function buildNewsFields(allLines: DocLine[]): Omit<ParsedPdfFields, 'coverImage
     const medianSize = sizes[Math.floor(sizes.length * 0.5)] || 10;
     const maxSize = Math.max(...sizes);
 
-    // ── Title: ONLY lines whose fontSize is within 20% of the page maximum
-    //    This strictly separates the main banner headline from section headers.
-    //    Also cap to first 30% of all lines so we don't travel down into body.
-    const titleFontMin = maxSize * 0.80;   // within 20% of biggest font = title zone
-    const topCutoff = Math.max(4, Math.ceil(lines.length * 0.30));
+    // ── Title: Look for largest font in the top 20% that isn't metadata
+    const topCutoff = Math.max(5, Math.ceil(lines.length * 0.20));
     const topLines = lines.slice(0, topCutoff);
-
-    const titleParts: string[] = [];
+    const candidateLines = topLines.filter(l => !isMetadataLine(l.text) && l.text.length > 5);
+    
+    // Sort candidates by font size descending
+    const sortedCandidates = [...candidateLines].sort((a, b) => b.fontSize - a.fontSize);
+    const bestTitleLine = sortedCandidates[0];
+    
+    let title = 'Untitled Bulletin';
     let lastTitleIdx = -1;
-    let titleFontSeen = -1;
 
-    for (let i = 0; i < topLines.length; i++) {
-        const l = topLines[i];
-        if (isMetadataLine(l.text)) continue;
-
-        if (l.fontSize >= titleFontMin) {
-            // Accept first title-zone line; track its font size
-            if (titleFontSeen < 0) titleFontSeen = l.fontSize;
-            // If next line drops significantly in font (≥30% smaller), stop
-            if (titleFontSeen > 0 && l.fontSize < titleFontSeen * 0.70) break;
-            titleParts.push(l.text);
-            lastTitleIdx = i;
-        } else if (titleParts.length > 0) {
-            // We've collected at least one title line and this one is smaller → done
-            break;
+    if (bestTitleLine) {
+        const titleParts = [bestTitleLine.text];
+        lastTitleIdx = lines.indexOf(bestTitleLine);
+        
+        // Check if the line immediately following is also part of the title (similar font or following its y)
+        const nextLine = lines[lastTitleIdx + 1];
+        if (nextLine && !isMetadataLine(nextLine.text) && nextLine.fontSize > medianSize * 1.5) {
+            titleParts.push(nextLine.text);
+            lastTitleIdx++;
         }
+        title = titleParts.join(' ').replace(/\s+/g, ' ').trim();
     }
-
-    // Fallback: if nothing found, take the first non-metadata line
-    if (!titleParts.length) {
-        for (const l of lines) {
-            if (!isMetadataLine(l.text) && l.text.length > 5) {
-                titleParts.push(l.text);
-                lastTitleIdx = lines.indexOf(l);
-                break;
-            }
-        }
-    }
-
-    const title = titleParts.join(' — ').replace(/\s+/g, ' ').trim() || 'Untitled Bulletin';
 
     // ── Body: everything after the title section
-    // Lines after lastTitleIdx in the original `lines` array
     const bodyStart = lastTitleIdx + 1;
     const bodyLines = lines.slice(bodyStart > 0 ? bodyStart : 1);
 
     // ── Reconstruct body as markdown paragraphs
-    // Y-gap > 18px = new paragraph; heading lines → ## Heading
+    // Y-gap > 1.5x line height = new paragraph; heading lines → ## Heading
+    // Continuation rule: if a line doesn't end with sentence-terminating punctuation
+    // and the next line is close, join them.
     const sections: string[] = [];
     let currentPara: string[] = [];
-    let prevY = -1;
-
-    console.log(`\n\n=== PDF SERVICE DEBUG ===\nTitle detected: "${title}"\nFound ${bodyLines.length} lines below title.`);
+    let prevLine: DocLine | null = null;
 
     for (const line of bodyLines) {
         if (isMetadataLine(line.text) && sections.length === 0 && currentPara.length === 0) {
-            // Skip header metadata before any content starts
             continue;
         }
 
-        const isNewSection = prevY >= 0 && (line.y - prevY) > 16;
+        const yGap = prevLine ? line.y - prevLine.y : 0;
+        const isSignificantGap = prevLine && yGap > (prevLine.fontSize * 1.5);
+        
+        // Sentence termination check: ends with . ! ? or matches a list item pattern
+        const endsSentence = /[.!?]$/.test(prevLine?.text || '');
+        const isContinuing = prevLine && !endsSentence && !isSignificantGap && !line.isHeading;
 
         if (line.isHeading && line.text.length < 120) {
             // Flush current paragraph
@@ -335,18 +354,31 @@ function buildNewsFields(allLines: DocLine[]): Omit<ParsedPdfFields, 'coverImage
                 sections.push(currentPara.join(' '));
                 currentPara = [];
             }
-            // Add as ## heading (skip if it's basically a repeat of the title)
+            // Add as ## heading
             if (!title.toLowerCase().includes(line.text.toLowerCase().slice(0, 20))) {
                 sections.push(`## ${line.text}`);
             }
-        } else if (isNewSection && currentPara.length > 0) {
+        } else if (isSignificantGap && currentPara.length > 0) {
             sections.push(currentPara.join(' '));
             currentPara = [line.text];
+        } else if (isContinuing) {
+            // Check for hyphenation at end of prev line
+            if (prevLine!.text.endsWith('-')) {
+                const head = currentPara.pop()!.slice(0, -1);
+                currentPara.push(head + line.text);
+            } else {
+                currentPara.push(line.text);
+            }
         } else {
-            currentPara.push(line.text);
+            if (currentPara.length > 0 && !isContinuing) {
+                 sections.push(currentPara.join(' '));
+                 currentPara = [line.text];
+            } else {
+                currentPara.push(line.text);
+            }
         }
 
-        prevY = line.y;
+        prevLine = line;
     }
     if (currentPara.length) sections.push(currentPara.join(' '));
 
@@ -426,8 +458,8 @@ export async function parsePdfToNewsFieldsFromFile(file: File): Promise<ParsedPd
 
     const fields = buildNewsFields(allLines);
 
-    // Render page 1 as JPEG for auto cover image
-    const coverImageBlob = await renderFirstPageToBlob(file);
+    // Dynamic Image Selection: Extract actual objects or fallback to high-quality render
+    const coverImageBlob = await extractBestImageFromPdf(file);
 
     return { ...fields, coverImageBlob: coverImageBlob ?? undefined };
 }

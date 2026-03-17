@@ -1,13 +1,19 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, Calendar, ChevronRight, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { Search, Calendar, ChevronRight, AlertTriangle, X } from 'lucide-react';
 import { storageService } from '../../services/storageService';
+import { osintService } from '../../services/osintService';
 import { NewsItem } from '../../types';
 import { Navbar } from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
+import { ThreatMap } from '../../components/ui/ThreatMap';
+import { LiveTicker } from '../../components/ui/LiveTicker';
 
-// Tier-1 cities as per bulletin
-const CITIES = ['All', 'Chennai', 'Bengaluru', 'Mumbai', 'Delhi', 'Hyderabad', 'Kolkata', 'Pune'];
+// National Intelligence Domains
+const DOMAINS = ['All', 'Geopolitics', 'Defense', 'Internal Security', 'Cyber', 'Economy', 'Terrorism', 'Border Intelligence'];
+
+const isDomainTag = (tag: string) =>
+    DOMAINS.some(domain => domain.toLowerCase() === tag.toLowerCase());
 
 function getIssueNumber(): string {
     const base = 89;
@@ -27,16 +33,38 @@ export const PublicHome: React.FC = () => {
     const [items, setItems] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [dbConnected, setDbConnected] = useState(true);
-    const [selectedCity, setSelectedCity] = useState('All');
+    const [selectedDomain, setSelectedDomain] = useState('All');
     const [searchInput, setSearchInput] = useState('');
     const [startDateInput, setStartDateInput] = useState('');
     const [endDateInput, setEndDateInput] = useState('');
     const [activeSearch, setActiveSearch] = useState('');
     const [activeStartDate, setActiveStartDate] = useState('');
     const [activeEndDate, setActiveEndDate] = useState('');
+    const [activeTag, setActiveTag] = useState('');
+    const [activeMapFocus, setActiveMapFocus] = useState<[number, number] | null>(null);
 
+    const location = useLocation();
     const today = new Date();
     const issueNumber = getIssueNumber();
+
+    const scrollToSection = useCallback((id: string) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, []);
+
+    // Pick up ?tag= and ?section= from URL
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const tag = params.get('tag');
+        setActiveTag(tag ? decodeURIComponent(tag) : '');
+
+        const section = params.get('section');
+        if (section) {
+            setTimeout(() => scrollToSection(section), 50);
+        }
+    }, [location.search, scrollToSection]);
 
     useEffect(() => {
         const init = async () => {
@@ -52,6 +80,7 @@ export const PublicHome: React.FC = () => {
             const published = allItems.filter(i =>
                 i.status === 'published' && i.publishedAt && new Date(i.publishedAt) <= now
             ).sort((a, b) => new Date(b.publishedAt!).getTime() - new Date(a.publishedAt!).getTime());
+
             setItems(published);
             setLoading(false);
         };
@@ -78,12 +107,14 @@ export const PublicHome: React.FC = () => {
                 }
             }
 
-            const matchesCity = selectedCity === 'All' ||
-                i.tags?.some(t => t.toLowerCase() === selectedCity.toLowerCase());
+            const matchesDomain = selectedDomain === 'All' ||
+                i.tags?.some(t => t.toLowerCase() === selectedDomain.toLowerCase());
 
-            return matchesSearch && matchesDate && matchesCity;
+            const matchesTag = !activeTag || i.tags?.some(t => t.toLowerCase() === activeTag.toLowerCase());
+
+            return matchesSearch && matchesDate && matchesDomain && matchesTag;
         });
-    }, [items, activeSearch, activeStartDate, activeEndDate, selectedCity]);
+    }, [items, activeSearch, activeStartDate, activeEndDate, selectedDomain, activeTag]);
 
     const handleSearch = () => {
         setActiveSearch(searchInput);
@@ -94,6 +125,7 @@ export const PublicHome: React.FC = () => {
     const handleClear = () => {
         setSearchInput(''); setStartDateInput(''); setEndDateInput('');
         setActiveSearch(''); setActiveStartDate(''); setActiveEndDate('');
+        setActiveTag('');
     };
 
     const featuredItem = filteredItems[0];
@@ -101,13 +133,18 @@ export const PublicHome: React.FC = () => {
 
     const getTitle = (item: NewsItem) => item.blocks.find(b => b.type === 'title')?.value || 'Untitled';
     const getExcerpt = (item: NewsItem) => item.blocks.find(b => b.type === 'excerpt')?.value || '';
-    const getImage = (item: NewsItem) => item.blocks.find(b => b.type === 'image')?.value;
+    const getImage = (item: NewsItem) => {
+        const raw = item.blocks.find(b => b.type === 'image')?.value;
+        if (typeof raw === 'string') return { src: raw };
+        return raw;
+    };
     const getDate = (item: NewsItem) => item.publishedAt
         ? new Date(item.publishedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
         : '';
-    const getCity = (item: NewsItem) => {
-        const cityTag = item.tags?.find(t => CITIES.includes(t));
-        return cityTag || '';
+    const getDomain = (item: NewsItem) => {
+        const domainTag = item.tags?.find(t => isDomainTag(t));
+        if (!domainTag) return '';
+        return DOMAINS.find(d => d.toLowerCase() === domainTag.toLowerCase()) || domainTag;
     };
 
     return (
@@ -149,68 +186,24 @@ export const PublicHome: React.FC = () => {
                             <div className="flex items-center gap-4">
                                 <div className="h-px w-10 bg-maroon-500"></div>
                                 <div className="w-2.5 h-2.5 rounded-full bg-maroon-500"></div>
-                                <a href="#feed" className="text-intel-900 font-bold text-sm uppercase tracking-widest hover:text-maroon-600 transition-colors">
+                                <button
+                                    type="button"
+                                    onClick={() => scrollToSection('feed')}
+                                    className="text-intel-900 font-bold text-sm uppercase tracking-widest hover:text-maroon-600 transition-colors"
+                                >
                                     View Intelligence Feed
-                                </a>
+                                </button>
                             </div>
                         </div>
 
-                        {/* Right: Visual Orb / Decorative element */}
-                        <div className="relative flex items-center justify-center lg:justify-end">
-                            {/* Large decorative square background */}
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-gray-100 rounded-full opacity-60 -z-10"></div>
-                            <div className="absolute bottom-0 left-0 w-32 h-32 bg-maroon-100 rounded-full opacity-40 -z-10"></div>
-
-                            {/* Main visual card with featured news */}
-                            {featuredItem && !loading ? (
-                                <Link to={`/news/${featuredItem.id}`} className="group relative w-full max-w-sm">
-                                    <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                                        {getImage(featuredItem) ? (
-                                            <img
-                                                src={getImage(featuredItem).src}
-                                                alt={getImage(featuredItem).caption}
-                                                className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-700"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-80 bg-intel-800 flex items-center justify-center">
-                                                <div className="text-center text-white p-8">
-                                                    <div className="font-clarendon text-3xl font-black mb-2">PULSE-R<sup>24</sup></div>
-                                                    <div className="text-intel-200 text-sm">Intelligence Brief</div>
-                                                </div>
-                                            </div>
-                                        )}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-intel-900 via-transparent to-transparent"></div>
-                                        <div className="absolute bottom-0 left-0 right-0 p-6">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <span className="text-maroon-300 text-xs font-mono uppercase tracking-widest">Featured Brief</span>
-                                                {getCity(featuredItem) && (
-                                                    <span className="text-maroon-300 font-bold text-xs">· {getCity(featuredItem)}</span>
-                                                )}
-                                            </div>
-                                            <h2 className="font-playfair text-lg font-bold text-white leading-tight line-clamp-2">
-                                                {getTitle(featuredItem)}
-                                            </h2>
-                                            <div className="flex items-center gap-2 mt-3 text-white text-xs group-hover:text-maroon-200 transition-colors font-semibold">
-                                                Read Full Brief <ChevronRight size={14} />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {/* Small accent card */}
-                                    <div className="absolute -bottom-4 -left-6 w-24 h-24 bg-maroon-600 rounded-xl flex flex-col items-center justify-center text-white shadow-lg">
-                                        <span className="font-clarendon font-black text-2xl leading-none">{today.getDate()}</span>
-                                        <span className="text-[10px] uppercase tracking-widest mt-1">
-                                            {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][today.getMonth()]}
-                                        </span>
-                                    </div>
-                                </Link>
-                            ) : (
-                                <div className="w-full max-w-sm h-80 bg-gray-100 rounded-2xl flex items-center justify-center animate-pulse">
-                                    <div className="text-center p-8">
-                                        <div className="font-clarendon text-4xl font-black text-intel-900 mb-2">PULSE-R<sup>24</sup></div>
-                                        <div className="text-gray-400 text-sm">Loading latest brief...</div>
-                                    </div>
-                                </div>
-                            )}
+                        {/* Right: Live Interactive Threat Map */}
+                        <div className="relative flex flex-col items-center justify-center lg:justify-end w-full h-full min-h-[500px]">
+                            <ThreatMap items={filteredItems} flyToArea={activeMapFocus} />
+                            
+                            {/* Live News Ticker Strip attached right beneath the map */}
+                            <div className="w-full mt-4">
+                                <LiveTicker items={filteredItems} onFlyTo={setActiveMapFocus} />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -224,11 +217,11 @@ export const PublicHome: React.FC = () => {
                         <span className="text-maroon-300 font-bold uppercase tracking-widest">Live Intelligence Feed</span>
                     </div>
                     <span className="text-intel-300 font-mono text-[11px]">{issueNumber}</span>
-                    <span className="text-intel-300 italic hidden md:block">Ranked by incident impact timeline across Tier-1 cities</span>
+                    <span className="text-intel-300 italic hidden md:block">Ranked by national incident impact and strategic significance</span>
                 </div>
             </div>
 
-            {/* ─── SEARCH & CITY FILTER ─── */}
+            {/* ─── SEARCH & DOMAIN FILTER ─── */}
             <div id="feed" className="bg-gray-50 border-b border-gray-200 py-6 px-6">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex flex-wrap gap-3 items-center justify-between">
@@ -264,20 +257,20 @@ export const PublicHome: React.FC = () => {
                             )}
                         </div>
 
-                        {/* City Tabs */}
-                        <div className="flex gap-0 overflow-x-auto">
-                            {CITIES.map(city => (
-                                <button
-                                    key={city}
-                                    onClick={() => setSelectedCity(city)}
-                                    className={`px-3 py-2 text-xs font-inter font-semibold uppercase tracking-wider whitespace-nowrap border-b-2 transition-colors ${selectedCity === city
-                                        ? 'border-maroon-600 text-maroon-600'
-                                        : 'border-transparent text-gray-400 hover:text-intel-800 hover:border-gray-300'
-                                        }`}
-                                >
-                                    {city}
-                                </button>
-                            ))}
+                        {/* Domain Filter Bar */}
+                    <div className="mt-8 flex items-center gap-2 overflow-x-auto pb-4 scrollbar-hide border-b border-gray-100">
+                        {DOMAINS.map(domain => (
+                            <button
+                                key={domain}
+                                onClick={() => setSelectedDomain(domain)}
+                                className={`whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-black uppercase tracking-widest transition-all ${selectedDomain === domain
+                                        ? 'bg-maroon-600 text-white shadow-md'
+                                        : 'bg-white text-gray-500 hover:bg-maroon-50 hover:text-maroon-700 border border-gray-200'
+                                    }`}
+                            >
+                                {domain}
+                            </button>
+                        ))}
                         </div>
                     </div>
                 </div>
@@ -319,7 +312,7 @@ export const PublicHome: React.FC = () => {
                 ) : filteredItems.length === 0 ? (
                     <div className="text-center py-20 border border-dashed border-gray-200">
                         <p className="text-gray-500">No bulletins found matching your criteria.</p>
-                        <button onClick={() => { handleClear(); setSelectedCity('All'); }} className="mt-4 text-maroon-600 font-medium hover:underline">
+                        <button onClick={() => { handleClear(); setSelectedDomain('All'); }} className="mt-4 text-maroon-600 font-medium hover:underline">
                             Clear all filters
                         </button>
                     </div>
@@ -327,7 +320,7 @@ export const PublicHome: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-16">
                         {filteredItems.map((item, idx) => {
                             const image = getImage(item);
-                            const city = getCity(item);
+                            const domain = getDomain(item);
                             const isFeatured = idx === 0;
                             return (
                                 <Link
@@ -360,8 +353,8 @@ export const PublicHome: React.FC = () => {
                                             </div>
                                         )}
                                         <div className="flex items-center gap-3 mb-3">
-                                            {city && <span className="text-maroon-600 font-bold text-xs uppercase tracking-wider">{city}</span>}
-                                            {item.tags?.filter(t => !CITIES.includes(t)).slice(0, 1).map(tag => (
+                                            {domain && <span className="text-maroon-600 font-bold text-xs uppercase tracking-wider">{domain}</span>}
+                                            {item.tags?.filter(t => !isDomainTag(t)).slice(0, 1).map(tag => (
                                                 <span key={tag} className="text-[10px] font-mono uppercase tracking-wider text-gray-400 bg-gray-100 px-2 py-0.5">{tag}</span>
                                             ))}
                                             <span className="text-xs font-mono text-gray-400 ml-auto">{getDate(item)}</span>
@@ -383,6 +376,39 @@ export const PublicHome: React.FC = () => {
                     </div>
                 )}
             </main>
+
+            {/* About section */}
+            <section id="about" className="bg-white border-t border-gray-100 py-16">
+                <div className="max-w-6xl mx-auto px-6 lg:px-8">
+                    <div className="flex items-center gap-4 mb-8">
+                        <div className="h-px w-10 bg-maroon-500"></div>
+                        <div className="w-2.5 h-2.5 rounded-full bg-maroon-500"></div>
+                        <span className="text-xs font-mono uppercase tracking-widest text-gray-500 font-semibold">About PULSE-R24</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                        <div className="md:col-span-2">
+                            <h2 className="font-clarendon text-3xl font-black text-intel-900 mb-4">
+                                Strategic situational awareness for decision makers
+                            </h2>
+                            <p className="text-gray-600 leading-relaxed">
+                                PULSE-R24 delivers concise, actionable intelligence briefs across geopolitics,
+                                defense, internal security, cyber threats, and economic risk. The platform
+                                supports rapid dissemination and structured approvals so the latest updates
+                                reach stakeholders without delay.
+                            </p>
+                        </div>
+                        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3">Key Focus</p>
+                            <ul className="text-sm text-gray-600 space-y-2">
+                                <li>National and regional threat intelligence</li>
+                                <li>Verified reporting and approval workflow</li>
+                                <li>OSINT-assisted monitoring and alerts</li>
+                                <li>Operational dashboards and analytics</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             <Footer />
         </div>
