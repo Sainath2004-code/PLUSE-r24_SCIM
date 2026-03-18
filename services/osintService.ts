@@ -1,18 +1,21 @@
-import { NewsItem } from '../types';
+  import { NewsItem } from '../types';
 import { CITY_COORDINATES } from '../constants';
 
-// Indian National Intelligence Sources
+// Authoritative Indian National Intelligence Sources
 const RSS_SOURCES = [
-  { name: 'TOI National', url: 'https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms' },
-  { name: 'NDTV National', url: 'https://feeds.feedburner.com/ndtvnews-top-stories' },
-  { name: 'ANI National', url: 'https://www.aninews.in/rss/feed/' }
+  { name: 'PIB Official', url: 'https://pib.gov.in/RssMain.aspx?ModId=6&Lang=2&Regid=3' },
+  { name: 'The Hindu National', url: 'https://www.thehindu.com/news/national/feeder/default.rss' },
+  { name: 'ANI India', url: 'https://www.aninews.in/rss/feed/' },
+  { name: 'India Today National', url: 'https://www.indiatoday.in/rss/home' },
+  { name: 'TOI India', url: 'https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms' },
+  { name: 'NDTV India', url: 'https://feeds.feedburner.com/ndtvnews-top-stories' }
 ];
 
 const RSS2JSON_BASE = 'https://api.rss2json.com/v1/api.json?rss_url=';
 
-// Simple NLP keywords for scoring
-const CRITICAL_KEYWORDS = ['attack', 'terror', 'blast', 'crash', 'dead', 'killed', 'cyber', 'hack', 'breach', 'critical', 'explosion', 'ambush'];
-const HIGH_KEYWORDS = ['arrest', 'threat', 'warning', 'storm', 'flood', 'protest', 'strike', 'scam', 'fraud', 'high', 'emergency', 'fire'];
+// Strategic NLP keywords for severity scoring
+const CRITICAL_KEYWORDS = ['attack', 'terror', 'blast', 'crash', 'dead', 'killed', 'cyber', 'hack', 'breach', 'critical', 'explosion', 'ambush', 'insurgency', 'border conflict'];
+const HIGH_KEYWORDS = ['arrest', 'threat', 'warning', 'storm', 'flood', 'protest', 'strike', 'scam', 'fraud', 'high', 'emergency', 'fire', 'deployment', 'missile'];
 
 function determineSeverity(title: string, content: string): NewsItem['severity'] {
   const text = (title + ' ' + content).toLowerCase();
@@ -29,7 +32,8 @@ function extractLocationTags(title: string, content: string): string[] {
 
   // Check for city matches from constants
   Object.keys(CITY_COORDINATES).forEach(city => {
-    // Basic word boundary check to avoid partial matches (e.g. "it" in "digital")
+    if (city === 'national') return;
+    // Word boundary check to avoid partial matches
     const regex = new RegExp(`\\b${city}\\b`, 'i');
     if (regex.test(text)) {
       tags.add(city.charAt(0).toUpperCase() + city.slice(1));
@@ -37,13 +41,11 @@ function extractLocationTags(title: string, content: string): string[] {
     }
   });
 
-  if (!foundSpecificLocation) {
+  // Aggressive National Filtering
+  const isNationalSource = text.includes('india') || text.includes('national') || text.includes('pib') || text.includes('center') || text.includes('delhi');
+  
+  if (!foundSpecificLocation || isNationalSource) {
     tags.add('National');
-  } else {
-    // If specific cities found, can still be national
-    if (text.includes('india') || text.includes('national')) {
-      tags.add('National');
-    }
   }
 
   return Array.from(tags);
@@ -52,15 +54,19 @@ function extractLocationTags(title: string, content: string): string[] {
 export const osintService = {
   fetchLiveNationalNews: async (): Promise<NewsItem[]> => {
     try {
-      const fetchPromises = RSS_SOURCES.map(source => 
-        fetch(`${RSS2JSON_BASE}${encodeURIComponent(source.url)}`)
+      // Bypassing 3rd party cache by appending a unique 10-minute resolution timestamp
+      const cacheBust = Math.floor(Date.now() / 600000);
+
+      const fetchPromises = RSS_SOURCES.map(source => {
+        const feedUrl = `${source.url}${source.url.includes('?') ? '&' : '?'}t=${cacheBust}`;
+        return fetch(`${RSS2JSON_BASE}${encodeURIComponent(feedUrl)}`)
           .then(res => res.json())
           .then(data => ({ source: source.name, items: data.items || [] }))
           .catch(err => {
             console.warn(`OSINT: Failed to fetch from ${source.name}`, err);
             return { source: source.name, items: [] };
-          })
-      );
+          });
+      });
 
       const results = await Promise.all(fetchPromises);
       const allItems: NewsItem[] = [];
@@ -74,7 +80,7 @@ export const osintService = {
           
           allItems.push({
             id: `osint-${source}-${index}-${Date.now()}`,
-            templateId: 'tpl-standard',
+            templateId: 'tpl-1764398847255', // Verified standard template ID
             status: 'pending_approval',
             author: `${source} | Intelligence Feed`,
             createdAt: new Date().toISOString(),
@@ -84,18 +90,19 @@ export const osintService = {
             tags: tags,
             blocks: [
               { blockId: `b1-${index}`, type: 'title', value: title },
-              { blockId: `b2-${index}`, type: 'excerpt', value: description.replace(/<[^>]+>/g, '').substring(0, 200) + '...' },
+              { blockId: `b2-${index}`, type: 'category', value: tags.includes('National') ? 'National' : (tags[1] || 'General') },
+              { blockId: `b3-${index}`, type: 'excerpt', value: description.replace(/<[^>]+>/g, '').substring(0, 200) + '...' },
               ...(item.enclosure?.link || item.thumbnail ? [{ 
-                blockId: `b3-${index}`, 
+                blockId: `b4-${index}`, 
                 type: 'image', 
                 value: { src: item.enclosure?.link || item.thumbnail, caption: `OSINT Visual: ${source}` } 
               }] : []),
-              { blockId: `b4-${index}`, type: 'markdown', value: (item.content || item.description || '').replace(/<[^>]+>/g, '\n\n') + `\n\n*Source: ${source} Intelligence*\n\nVerified via national OSINT sensors. [Full Report](${item.link})` }
+              { blockId: `b5-${index}`, type: 'markdown', value: (item.content || item.description || '').replace(/<[^>]+>/g, '\n\n') + `\n\n*Source: ${source} Intelligence*\n\nVerified via national OSINT sensors. [Full Report](${item.link})` }
             ],
             meta: {
               source: 'osint_feed',
               externalLink: item.link,
-              guid: item.guid || item.link
+              guid: item.guid || item.link || title
             }
           });
         });
@@ -106,7 +113,7 @@ export const osintService = {
         new Date(b.publishedAt!).getTime() - new Date(a.publishedAt!).getTime()
       ).slice(0, 30);
 
-      console.log(`OSINT Engine: Aggragated and processed ${sorted.length} national intelligence items.`);
+      console.log(`OSINT Engine: Aggregated and processed ${sorted.length} national intelligence items.`);
       return sorted;
 
     } catch (error) {

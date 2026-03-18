@@ -121,7 +121,13 @@ export const AdminDashboard: React.FC = () => {
                 <StatCard label="Total Intelligence" value={stats.total} color="border-l-maroon-600" icon={FileText} loading={loading} />
                 <StatCard label="Disseminated" value={stats.published} color="border-l-emerald-500" icon={CheckCircle} loading={loading} />
                 <StatCard label="Draft Protocol" value={stats.draft} color="border-l-slate-400" icon={Clock} loading={loading} />
-                <StatCard label="Verification" value={stats.pending} color="border-l-amber-500" icon={Eye} loading={loading} />
+                <StatCard 
+                    label="Verification" 
+                    value={stats.pending} 
+                    color={stats.pending > 0 ? "border-l-maroon-600 bg-maroon-50/50 dark:bg-maroon-900/10" : "border-l-amber-500"} 
+                    icon={Eye} 
+                    loading={loading} 
+                />
                 <StatCard label="Digital Extractions" value={stats.pdfImports} color="border-l-maroon-400" icon={FileUp} loading={loading} />
             </div>
 

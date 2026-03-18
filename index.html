@@ -4,9 +4,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PULSE-R²⁴ | Daily Threat Intelligence Bulletin</title>
+  <title>PULSE-R24 | Daily Threat Intelligence Bulletin</title>
   <meta name="description"
-    content="PULSE-R24 — The Daily Threat Intelligence Bulletin. Situational awareness on security, corporate intelligence, and national-level updates across Tier-1 cities in India." />
+    content="PULSE-R24 - The Daily Threat Intelligence Bulletin. Situational awareness on security, corporate intelligence, and national-level updates across Tier-1 cities in India." />
   <meta name="keywords"
     content="threat intelligence, security bulletin, India, corporate intelligence, ISSP, RRU Puducherry, daily brief" />
 
@@ -16,52 +16,17 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Besley:ital,wght@0,400..900;1,400..900&family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@700;900&family=Playfair+Display:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
     rel="stylesheet" />
-
-  <!-- Tailwind CSS CDN with custom theme config -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            intel: {
-              950: '#000d1a', 900: '#001428', 800: '#001f3f', 700: '#002d5c',
-              600: '#003c7a', 500: '#004d99', 400: '#2170c4', 300: '#5b9bd5',
-              200: '#9fc3e8', 100: '#d4e8f7',
-            },
-            maroon: {
-              900: '#4a0000', 800: '#6b0000', 700: '#7d0000', 600: '#8b0000',
-              500: '#a10000', 400: '#c41e1e', 300: '#e05252', 200: '#f5aaaa',
-              100: '#fde8e8', 50: '#fff5f5',
-            },
-            brand: {
-              50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc',
-              400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca',
-              800: '#3730a3', 900: '#312e81', 950: '#1e1b4b',
-            }
-          },
-          fontFamily: {
-            cinzel: ['"Cinzel Decorative"', 'Cinzel', 'Georgia', 'serif'],
-            playfair: ['"Playfair Display"', 'Georgia', 'serif'],
-            inter: ['Inter', 'system-ui', 'sans-serif'],
-            clarendon: ['"Besley"', 'Clarendon', 'Rockwell', '"Zilla Slab"', 'serif'],
-          }
-        }
-      }
-    }
-  </script>
 </head>
 
 <!-- Apply dark class BEFORE render to prevent white flash -->
 <script>
-    (function () {
-      var theme = localStorage.getItem('theme');
-      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (theme === 'dark' || (!theme && prefersDark)) {
-        document.documentElement.classList.add('dark');
-      }
-    })();
+  (function () {
+    var theme = localStorage.getItem('theme');
+    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (theme === 'dark' || (!theme && prefersDark)) {
+      document.documentElement.classList.add('dark');
+    }
+  })();
 </script>
 
 <body class="bg-white dark:bg-slate-950 text-gray-900 dark:text-white font-inter antialiased transition-colors">

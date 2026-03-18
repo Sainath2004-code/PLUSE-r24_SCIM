@@ -38,6 +38,13 @@ export interface NewsItem {
   tags?: string[];
   category?: string;
   severity?: SeverityLevel;
+  seoTitle?: string;
+  seoDescription?: string;
+  scheduledAt?: string;
+  featured?: boolean;
+  slug?: string;
+  readingTime?: number;
+  viewCount?: number;
   createdAt: string;
   updatedAt?: string;
   publishedAt?: string | null;
@@ -52,4 +59,35 @@ export interface Admin {
   email: string;
   passwordHash: string;
   name: string;
+}
+
+export interface Label {
+  id: string;
+  name: string;
+  color: string;
+  created_at: string;
+}
+
+export interface Email {
+  id: string;
+  folder: 'inbox' | 'sent' | 'drafts' | 'spam' | 'trash' | 'scheduled' | 'starred';
+  sender_email?: string;
+  sender_name?: string;
+  to_recipients: { email: string; name?: string }[];
+  cc_recipients?: { email: string; name?: string }[];
+  bcc_recipients?: { email: string; name?: string }[];
+  subject: string;
+  body_html: string;
+  status: 'draft' | 'scheduled' | 'sending' | 'sent' | 'failed' | 'delivered';
+  is_read: boolean;
+  is_starred: boolean;
+  labels: string[] | any[]; // Array of label IDs or objects
+  template_id?: string;
+  parent_id?: string;
+  thread_id?: string;
+  opened_at?: string;
+  scheduled_for?: string;
+  created_at: string;
+  updated_at?: string;
+  sent_at?: string;
 }

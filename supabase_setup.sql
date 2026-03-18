@@ -60,6 +60,9 @@ on conflict (id) do nothing;
 insert into storage.buckets (id, name, public)
 values ('news-images', 'news-images', true)
 on conflict (id) do nothing;
+insert into storage.buckets (id, name, public)
+values ('news-pdfs', 'news-pdfs', true)
+on conflict (id) do nothing;
 
 -- Create Policy safely (skipping ALTER TABLE which causes errors)
 do $$
@@ -75,5 +78,18 @@ begin
     for all 
     using ( bucket_id = 'news-images' ) 
     with check ( bucket_id = 'news-images' );
+  end if;
+
+  if not exists (
+    select 1 from pg_policies 
+    where schemaname = 'storage' 
+    and tablename = 'objects' 
+    and policyname = 'Public Access News PDFs'
+  ) then
+    create policy "Public Access News PDFs" 
+    on storage.objects 
+    for all 
+    using ( bucket_id = 'news-pdfs' ) 
+    with check ( bucket_id = 'news-pdfs' );
   end if;
 end $$;

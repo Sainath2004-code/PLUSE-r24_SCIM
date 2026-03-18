@@ -116,6 +116,10 @@
     @apply bg-slate-400 dark:bg-slate-500;
 }
 
+/* Hide scrollbars but keep scroll functionality */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* ─── Global base ─────────────────────────────────────────────────────── */
 @layer base {
     body {

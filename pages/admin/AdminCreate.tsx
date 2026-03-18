@@ -197,7 +197,7 @@ export const AdminCreate: React.FC = () => {
                 severity,
                 status,
                 publishedAt: status === 'published'
-                    ? (existingItem?.publishedAt || new Date().toISOString())
+                    ? new Date().toISOString()
                     : (existingItem?.publishedAt ?? undefined),
                 meta,
                 scheduledAt: meta.scheduledAt,

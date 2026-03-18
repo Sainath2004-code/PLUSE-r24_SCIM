@@ -57,7 +57,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_news_items_slug
 
 -- 6. Full-text search index on title + tags (GIN index)
 CREATE INDEX IF NOT EXISTS idx_news_items_fts
-  ON news_items USING gin(to_tsvector('english', coalesce(data::text, '')));
+  ON news_items USING gin(to_tsvector('english', coalesce(blocks::text, '')));
 
 -- ============================================================
 -- ROW LEVEL SECURITY (RLS)
