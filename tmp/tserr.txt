@@ -1,0 +1,3 @@
+components/ui/ThreatMap.tsx(267,10): error TS2304: Cannot find name 'LeafletGeoJSON'.
+components/ui/ThreatMap.tsx(268,19): error TS2304: Cannot find name 'indiaStatesData'.
+\n

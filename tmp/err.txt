@@ -1,0 +1,9 @@
+components/ui/ThreatMap.tsx(1,8): error TS2300: Duplicate identifier 'React'.
+components/ui/ThreatMap.tsx(4,29): error TS2307: Cannot find module '../../assets/india_states.json' or its corresponding type declarations.
+components/ui/ThreatMap.tsx(5,13): error TS2300: Duplicate identifier 'React'.
+components/ui/ThreatMap.tsx(267,10): error TS2604: JSX element type 'GeoJSON' does not have any construct or call signatures.
+components/ui/ThreatMap.tsx(267,10): error TS2686: 'GeoJSON' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+components/ui/ThreatMap.tsx(267,10): error TS2786: 'GeoJSON' cannot be used as a JSX component.
+  Its type 'typeof import("C:/Users/yksai/OneDrive/Desktop/su r24/news-app/node_modules/@types/geojson/index")' is not a valid JSX element type.
+tmp/verify_project.ts(2,20): error TS2307: Cannot find module 'dotenv' or its corresponding type declarations.
+\n
