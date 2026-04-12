@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl, GeoJSON as LeafletGeoJSON } from 'react-leaflet';
 import L from 'leaflet';
-// @ts-ignore
-import indiaStatesData from '../../src/assets/india_states.json';
+
+import indiaStatesData from '../../assets/india_states.json';
 
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.heat';
