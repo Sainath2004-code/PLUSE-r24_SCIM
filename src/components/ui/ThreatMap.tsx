@@ -143,9 +143,18 @@ const CITY_TO_STATE: Record<string, string> = {
   'Bengaluru': 'Karnataka',
   'Mumbai': 'Maharashtra',
   'Pune': 'Maharashtra',
-  'Delhi': 'NCT of Delhi',
+  'Delhi': 'Delhi',
   'Hyderabad': 'Telangana',
   'Kolkata': 'West Bengal'
+};
+
+const STATE_NAME_ALIASES: Record<string, string> = {
+  'Andaman and Nicobar': 'Andaman and Nicobar Islands',
+  'NCT of Delhi': 'Delhi',
+  'Orissa': 'Odisha',
+  'Uttaranchal': 'Uttarakhand',
+  'Dadra and Nagar Haveli': 'Dadra and Nagar Haveli and Daman and Diu',
+  'Daman and Diu': 'Dadra and Nagar Haveli and Daman and Diu'
 };
 
 const SEVERITY_SCORES: Record<string, number> = {
@@ -164,6 +173,11 @@ const SEVERITY_COLORS: Record<number, string> = {
   1: '#3b82f6'  // blue
 };
 
+const normalizeStateName = (name: string) => STATE_NAME_ALIASES[name] || name;
+
+const getFeatureStateName = (feature: any) =>
+  normalizeStateName(feature.properties?.st_nm || feature.properties?.NAME_1 || '');
+
 export function ThreatMap({ items, flyToArea }: ThreatMapProps) {
   const stateSeverity = React.useMemo(() => {
     const scores: Record<string, number> = {};
@@ -172,19 +186,18 @@ export function ThreatMap({ items, flyToArea }: ThreatMapProps) {
       const score = item.severity ? SEVERITY_SCORES[item.severity] : 0;
       if (score > 0) {
         activeCities.forEach(city => {
-          const state = CITY_TO_STATE[city];
+          const state = normalizeStateName(CITY_TO_STATE[city]);
           if (!scores[state] || score > scores[state]) {
             scores[state] = score;
           }
         });
       }
     });
-    if (scores['NCT of Delhi']) scores['Delhi'] = scores['NCT of Delhi']; 
     return scores;
   }, [items]);
 
   const geoJsonStyle = React.useCallback((feature: any) => {
-    const stateName = feature.properties?.NAME_1;
+    const stateName = getFeatureStateName(feature);
     const score = stateSeverity[stateName];
     if (score) {
       return {
