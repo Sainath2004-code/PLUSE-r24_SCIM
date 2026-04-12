@@ -66,7 +66,7 @@ export const Navbar: React.FC = () => {
                             <img
                                 src="/logos/issp-logo.png"
                                 alt="ISSP - International Society for Security Professionals"
-                                className="h-12 w-auto md:h-16 md:w-auto object-contain drop-shadow-sm transition-transform hover:scale-105"
+                                className="h-16 w-auto md:h-24 md:w-auto object-contain drop-shadow-sm transition-transform hover:scale-105"
                             />
                         </div>
 
