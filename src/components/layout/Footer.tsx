@@ -65,7 +65,7 @@ export const Footer: React.FC = () => {
                         </div>
                         <ul className="space-y-4">
                             <li>
-                                <span className="block text-sm font-medium text-white/90">PGDSCIM (2025-26)</span>
+                                <span className="block text-sm font-medium text-white/90">PGD (2025-26)</span>
                                 <span className="block text-xs text-white/50 mt-1">Rashtriya Raksha University, Puducherry</span>
                             </li>
                             <li className="pt-2">
