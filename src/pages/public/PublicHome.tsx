@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, Calendar, ChevronRight, AlertTriangle, X } from 'lucide-react';
+import { Search, Calendar, ChevronRight, AlertTriangle, X, Download } from 'lucide-react';
 import { storageService } from '../../services/storageService';
 import { osintService } from '../../services/osintService';
 import { supabase } from '../../services/supabaseClient';
@@ -9,6 +9,8 @@ import { Navbar } from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
 import { ThreatMap } from '../../components/ui/ThreatMap';
 import { LiveTicker } from '../../components/ui/LiveTicker';
+import { useToast } from '../../context/ToastContext';
+import { downloadNewsPdf } from '../../services/newsPdf';
 
 // National Intelligence Domains
 const ITEMS_PER_PAGE = 6;
@@ -53,6 +55,7 @@ function formatBulletinDate(date: Date): string {
 }
 
 export const PublicHome: React.FC = () => {
+    const { addToast } = useToast();
     const [items, setItems] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [dbConnected, setDbConnected] = useState(true);
@@ -66,6 +69,7 @@ export const PublicHome: React.FC = () => {
     const [activeTag, setActiveTag] = useState('');
     const [activeMapFocus, setActiveMapFocus] = useState<[number, number] | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [pdfGenerating, setPdfGenerating] = useState(false);
 
     const location = useLocation();
     const today = new Date();
@@ -198,6 +202,29 @@ export const PublicHome: React.FC = () => {
         setCurrentPage(1);
     };
 
+    const handleDownloadPdf = useCallback(async () => {
+        if (filteredItems.length === 0) {
+            addToast('No published bulletins available for PDF export.', 'error');
+            return;
+        }
+
+        setPdfGenerating(true);
+        try {
+            await downloadNewsPdf(filteredItems, {
+                selectedDomain,
+                activeTag,
+                activeStartDate,
+                activeEndDate,
+            });
+            addToast('PDF downloaded successfully.', 'success');
+        } catch (error: any) {
+            console.error('PDF generation failed:', error);
+            addToast(error?.message || 'Failed to generate PDF.', 'error');
+        } finally {
+            setPdfGenerating(false);
+        }
+    }, [filteredItems, selectedDomain, activeTag, activeStartDate, activeEndDate, addToast]);
+
     const remainingItems = paginatedItems;
 
     const getTitle = (item: NewsItem) => item.blocks.find(b => b.type === 'title')?.value || 'Untitled';
@@ -325,6 +352,16 @@ export const PublicHome: React.FC = () => {
                                 </button>
                             )}
                         </div>
+
+                        <button
+                            type="button"
+                            onClick={handleDownloadPdf}
+                            disabled={pdfGenerating || filteredItems.length === 0}
+                            className="inline-flex items-center gap-2 px-5 py-2 bg-intel-900 hover:bg-intel-800 text-white text-sm font-semibold uppercase tracking-wider transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <Download size={15} />
+                            {pdfGenerating ? 'Generating PDF...' : 'Download PDF'}
+                        </button>
 
                         {/* Domain Filter Bar */}
                     <div className="mt-8 flex items-center gap-2 overflow-x-auto pb-4 scrollbar-hide border-b border-gray-100">
